@@ -15,7 +15,8 @@ No other dependency without asking the user first.
 - Map: 12×9 hex grid, pointy-top, odd-r offset storage, axial maths (`src/engine/grid.ts`). 6 equivalent neighbors; directions E, O, NE, NO, SE, SO.
 - `src/data/` — elements, laws, miracles, balance constants. **Every gameplay number lives here.**
 - `src/ui/` — Preact components. They read the state and call the engine; they hold no rules.
-- `scripts/sim.ts` — balance simulator (no UI).
+- `src/engine/ai/` — planner policy (self-contained, reusable for the future idle mode).
+- `scripts/sim.ts` — balance simulator (no UI); variants it compares live in `src/data/variants.ts`.
 - `tests/` — Vitest tests for the engine.
 
 ## Rules for the engine
@@ -31,7 +32,7 @@ No other dependency without asking the user first.
 - `npm run build` — typecheck + production build
 - `npm test` — Vitest (run once); `npm run test:watch`
 - `npm run typecheck` — `tsc --noEmit`
-- `npm run sim -- --runs 500` — balance simulation (`--policy naive|greedy`, `--seed N`)
+- `npm run sim -- --runs 500` — balance simulation (`--policy naive|greedy|planner`, `--seed N`, `--planner-k 20`, `--sweep [--variants A,B]`)
 
 ## Conventions
 - Vite `base` is `/ecosystemia/` (GitHub Pages). Deployment: `.github/workflows/deploy.yml`.

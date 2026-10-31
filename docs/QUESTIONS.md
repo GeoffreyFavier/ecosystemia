@@ -105,3 +105,73 @@ garde la structure actuelle du jeu et ne touche que deux chiffres de `src/data/c
 reste à ~6 % et 92 % des victoires de greedy arrivent en saison 5. Si l'on veut des victoires plus précoces, la piste à
 tester ensuite est une Croissance **intermédiaire** entre ≥ 3 et ≥ 2 voisins (par exemple ≥ 2 voisins seulement si la
 Plante touche aussi de l'eau, ou un seuil de 3 avec les Forêts comptant double), puis re-régler l'Essence.
+
+## Itération 2 : référence G, planner, Croissance, Orage
+
+**Variante G appliquée par défaut** (Essence de départ 12, objectif 40 végétaux dont 12 Forêts) : elle est la référence `REF`.
+`naive` est affichée à titre informatif (≈ 6 %), sans cible.
+
+### Planner (`src/engine/ai/`, `npm run sim -- --policy planner`)
+- Pour chaque option de Révélation (y compris passer), K = 20 plans de miracles (heuristiques : semer près de l'eau ou des
+  végétaux, sources près des graines isolées, soulever près d'une Forêt exposée, brûlis des Plantes bloquées si Cendre fertile),
+  chacun simulé sur la saison suivante avec le vrai moteur ; score = végétaux + 2 × Forêts + Essence / 3. Déterministe
+  (RNG dérivé de la graine, le RNG de la partie n'est pas touché).
+- **Temps de calcul : ≈ 0,32 s par partie à K = 20** (≈ 0,14 s à K = 8) : K n'a pas été réduit. Un clonage d'état écrit à la
+  main a rendu le moteur ~7× plus rapide (1,9 → 0,26 ms par saison simulée) sans changer un seul résultat.
+- Première version : 77 % sur la référence, et **moins bonne que greedy** dans les variantes faciles. Cause : son plan
+  « tout dépenser » posait des Sources avant les graines et plafonnait à 10 lancers. Après ajout de deux plans (semer seul ;
+  semer d'abord, Source seulement quand plus aucune graine ne peut toucher l'eau) et un plafond de 24 lancers : **94,2 %**.
+- **Soulever et Embraser ne servent presque jamais** (0,0 et 0,1 lancer par partie pour le planner) : ces deux miracles ne
+  sont pas validés par la simulation.
+
+### Sweep Croissance (500 parties par politique, graines 1–500)
+`S≤3/4/5` = part des victoires en saison ≤ 3 / 4 / 5 ; « ≤ S4 » = part des victoires en saison ≤ 4 ; « brûlés » = végétaux perdus
+par le feu par partie.
+
+| Var | Description | naive | greedy | greedy S≤3/4/5 | planner | planner S≤3/4/5 | planner ≤ S4 | brûlés (greedy / planner) |
+|-----|-------------|-------|--------|----------------|---------|-----------------|--------------|---------------------------|
+| **REF** | Référence : Essence 12, Croissance ≥ 3 végétaux | 5,8 % | **45,0 %** | 0/8/92 | **94,2 %** | 6/47/47 | **53 %** | 0,0 / 0,0 |
+| REF-10 | Référence, Essence 10 | 5,6 % | 26,6 % | 0/7/93 | 85,4 % | 3/46/51 | 49 % | 0,0 / 0,0 |
+| R1-12 | ≥ 3 végétaux, ou ≥ 2 avec Eau voisine ; Essence 12 | 7,4 % | 99,6 % | 2/64/34 | 99,6 % | 27/67/6 | 94 % | 0,0 / 0,0 |
+| R1-10 | R1, Essence 10 | 7,2 % | 99,6 % | 1/41/58 | 99,8 % | 18/66/16 | 84 % | 0,0 / 0,0 |
+| R2-12 | ≥ 3 végétaux, ou ≥ 2 dont 1 Forêt ; Essence 12 | 7,2 % | 77,0 % | 1/36/63 | 99,4 % | 15/59/27 | 73 % | 0,0 / 0,0 |
+| R2-10 | R2, Essence 10 | 6,8 % | 63,2 % | 0/28/72 | 97,4 % | 11/51/38 | 62 % | 0,0 / 0,0 |
+| R3-12 | ≥ 2 végétaux et Eau à distance ≤ 2 ; Essence 12 | 7,4 % | 99,6 % | 2/64/34 | 99,6 % | 28/66/6 | 94 % | 0,0 / 0,0 |
+| R3-10 | R3, Essence 10 | 7,2 % | 99,6 % | 1/41/58 | 99,8 % | 18/66/16 | 84 % | 0,0 / 0,0 |
+
+R1 et R3 donnent des résultats quasi identiques (une Plante naît toujours au bord de l'eau par Germination, donc « Eau voisine »
+et « Eau à distance ≤ 2 » sont presque toujours vraies) et rendent le jeu trivial : abaisser le seuil à 2 voisins supprime le goulot
+de la Croissance. R2 est la plus proche des cibles mais reste trop facile pour greedy (63-77 %).
+
+### Usage des miracles (lancers par partie ; Semer / Source / Soulever / Embraser)
+| Var | greedy | planner |
+|-----|--------|---------|
+| REF | 38,2 / 3,9 / 0 / 0 | 37,7 / 4,1 / 0 / 0 |
+| R2-12 | 42,0 / 5,3 / 0 / 0 | 38,6 / 4,7 / 0 / 0,0 |
+| R2-10 | 39,6 / 4,8 / 0 / 0 | 37,8 / 4,3 / 0 / 0 |
+| REF + Orage 8 | 28,0 / 1,6 / 0 / 0 | 24,2 / 2,4 / 0 / 0,1 |
+
+### Adversité : Orage (optionnel, désactivé par défaut)
+Toutes les 8 cycles, la Forêt d'altitude max devient Feu (départage de Foudre). Testé sur les 2 meilleures variantes de l'étape 3
+(R2-10, R2-12) et sur la référence ; en plus, une version toutes les 16 cycles.
+
+| Var | greedy | greedy S≤3/4/5 | planner | planner S≤3/4/5 | planner ≤ S4 | végétaux brûlés (greedy / planner, dont Forêts) |
+|-----|--------|----------------|---------|-----------------|--------------|--------------------------------------------------|
+| REF + Orage 8 | 0,0 % | — | 10,2 % | 0/27/73 | 27 % | 21,6 / 19,5 (9,8) |
+| R2-12 + Orage 8 | 0,6 % | 0/0/100 | 21,0 % | 0/29/71 | 29 % | 24,1 / 25,2 (19,8) |
+| R2-10 + Orage 8 | 0,2 % | 0/0/100 | 16,0 % | 0/29/71 | 29 % | 21,1 / 23,6 (18,3) |
+| REF + Orage 16 | 0,2 % | 0/0/100 | 36,0 % | 0/49/51 | 49 % | 20,3 / 17,3 (9,8) |
+| R2-12 + Orage 16 | 6,2 % | 0/19/81 | 54,8 % | 0/49/50 | 50 % | 23,5 / 20,5 (16,8) |
+
+**Le feu coûte cher, et il est décisif.** Un seul Feu embrase tout le végétal contigu (il touche les 6 voisins à chaque cycle), donc un
+coup d'Orage détruit 8-10 végétaux et une saison de croissance. Même 2 coups par partie (toutes les 16 cycles) font passer greedy de
+45 % à 0,2 % et le planner de 94 % à 36 %. Les bots n'ont aucune parade (Racines humides n'est jamais choisie, ni coupe-feu) : tant que
+le joueur n'a pas de réponse crédible, l'Orage n'est pas une « adversité équilibrée » mais un mur.
+
+### Recommandation (non appliquée en plus de G)
+1. **Garder la référence G telle quelle** : c'est la seule variante qui tient simultanément les trois cibles (greedy 45,0 % ; planner
+   94,2 % ; 53 % des victoires du planner en saison ≤ 4). Ne pas toucher la Croissance : R1/R3 sont triviales, R2 trop facile pour greedy.
+2. **Laisser l'Orage désactivé.** Si on veut de l'adversité, il faut d'abord donner une parade au joueur ou limiter la propagation (par
+   exemple le feu qui ne se propage qu'une fois sur deux, un coupe-feu naturel comme l'Eau ou la Roche déjà présent, ou un Orage qui
+   n'éclate qu'à partir de la saison 3), puis re-mesurer avec un planner qui sait utiliser Racines humides.
+3. **Valider Soulever et Embraser autrement** : les deux politiques ne s'en servent pas ; seuls des tests humains diront s'ils ont une place.

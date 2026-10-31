@@ -15,7 +15,8 @@ npm test           # tests du moteur (Vitest)
 npm run build      # typecheck + build de production
 npm run sim -- --runs 500                  # simulation d'équilibrage (politique naïve)
 npm run sim -- --runs 500 --policy greedy  # politique de référence plus maligne (+ diagnostic détaillé)
-npm run sim -- --sweep                     # compare les variantes d'équilibrage (src/data/variants.ts)
+npm run sim -- --runs 500 --policy planner # planificateur à 1 saison d'avance (src/engine/ai)
+npm run sim -- --sweep                     # compare les variantes d'équilibrage (src/data/variants.ts), en parallèle
 ```
 
 Node ≥ 22.6 est requis pour le script de simulation (il exécute le TypeScript directement).
