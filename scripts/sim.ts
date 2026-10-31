@@ -101,20 +101,27 @@ if (isMainThread && !flag('sweep')) {
 /** Run `fn` with a variant's overrides applied to the (mutable) data, then restore the defaults. */
 function withVariant<T>(v: BalanceVariant, fn: () => T): T {
   const croissance = LAW_BY_ID['croissance'] as Extract<Law, { kind: 'transform' }>;
-  const saved = { vegetal: GOAL.vegetal, forests: GOAL.forests, essence: START.essence, conditions: croissance.rule.conditions, orage: NATURAL_EVENTS.map((e) => e.enabled) };
+  const saved = { vegetal: GOAL.vegetal, forests: GOAL.forests, essence: START.essence, conditions: croissance.rule.conditions, orage: NATURAL_EVENTS.map((e) => ({ enabled: e.enabled, period: e.period })) };
   try {
     if (v.goalVegetal !== undefined) GOAL.vegetal = v.goalVegetal;
     if (v.goalForests !== undefined) GOAL.forests = v.goalForests;
     if (v.startEssence !== undefined) START.essence = v.startEssence;
     if (v.croissance) croissance.rule.conditions = v.croissance;
-    if (v.orage !== undefined) for (const e of NATURAL_EVENTS) if (e.id === 'orage') e.enabled = v.orage;
+    for (const e of NATURAL_EVENTS) {
+      if (e.id !== 'orage') continue;
+      if (v.orage !== undefined) e.enabled = v.orage;
+      if (v.orageEvery !== undefined) e.period = v.orageEvery;
+    }
     return fn();
   } finally {
     GOAL.vegetal = saved.vegetal;
     GOAL.forests = saved.forests;
     START.essence = saved.essence;
     croissance.rule.conditions = saved.conditions;
-    NATURAL_EVENTS.forEach((e, i) => (e.enabled = saved.orage[i]!));
+    NATURAL_EVENTS.forEach((e, i) => {
+      e.enabled = saved.orage[i]!.enabled;
+      e.period = saved.orage[i]!.period;
+    });
   }
 }
 

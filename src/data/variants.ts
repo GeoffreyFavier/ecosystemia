@@ -15,6 +15,8 @@ export interface BalanceVariant {
   croissance?: Condition[];
   /** Enables the optional natural event "Orage". */
   orage?: boolean;
+  /** Overrides the Orage period (cycles), when enabled. */
+  orageEvery?: number;
 }
 
 // Croissance candidates (Plant → Forest). The default rule is "≥ 3 vegetal neighbors".
@@ -44,4 +46,7 @@ export const VARIANTS: readonly BalanceVariant[] = [
   { id: 'REF+O', label: 'Référence + Orage', orage: true },
   { id: 'R2-12+O', label: 'R2, Essence 12 + Orage', croissance: CROISSANCE_R2, orage: true },
   { id: 'R2-10+O', label: 'R2, Essence 10 + Orage', croissance: CROISSANCE_R2, startEssence: 10, orage: true },
+  // Weaker Orage (every 16 cycles = twice per game), since every 8 turned out to be decisive.
+  { id: 'REF+O16', label: 'Référence + Orage toutes les 16 cycles', orage: true, orageEvery: 16 },
+  { id: 'R2-12+O16', label: 'R2, Essence 12 + Orage toutes les 16 cycles', croissance: CROISSANCE_R2, orage: true, orageEvery: 16 },
 ];
