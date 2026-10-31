@@ -86,6 +86,11 @@ Pour chaque case, on évalue dans cet ordre et on s'arrête à la première règ
 **C. Mise à jour.** Âges (+1 si inchangée, 0 si changée), `lastLawId`, journal.
 
 Les lois naturelles sont toujours actives, hors grimoire, et affichées dans l'UI.
+
+**Événement naturel optionnel — Orage** (désactivé par défaut, `NATURAL_EVENTS` dans `src/data/naturalLaws.ts`) : quand il
+est activé, tous les 8 cycles (cycle global % 8 == 0, donc à la fin de chaque saison), la Forêt d'altitude maximale devient
+Feu, avec le même départage que Foudre. Il s'applique avant les événements du grimoire. Il sert aux tests d'adversité du
+simulateur ; il ne fait pas partie des règles livrées.
 Le moteur produit un **journal** par cycle (case, de → vers, loi) que l'UI rejoue.
 
 ## 6. Lois
@@ -93,7 +98,7 @@ Le moteur produit un **journal** par cycle (case, de → vers, loi) que l'UI rej
 Les lois sont des **données** interprétées par un petit moteur de conditions.
 Conditions disponibles : élément ciblé, nombre de voisins d'un type (min/max, filtre
 d'altitude relative plus haut/plus bas), voisin dans une direction donnée, âge minimum, altitude de la case,
-plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge I.
+`within` (cases à distance ≤ d, pas seulement voisines), `anyOf` (OU de listes de conditions), plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge I.
 
 ### Lois de départ (dans le grimoire)
 

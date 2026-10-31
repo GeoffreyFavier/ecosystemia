@@ -40,4 +40,8 @@ export const VARIANTS: readonly BalanceVariant[] = [
   { id: 'R2-10', label: 'R2, Essence 10', croissance: CROISSANCE_R2, startEssence: 10 },
   { id: 'R3-12', label: 'R3 (≥ 2 végétaux et Eau à distance ≤ 2), Essence 12', croissance: CROISSANCE_R3 },
   { id: 'R3-10', label: 'R3, Essence 10', croissance: CROISSANCE_R3, startEssence: 10 },
+  // Adversity: the optional natural event Orage (every 8 cycles). R2-10 / R2-12 are the two closest R variants; REF is the control.
+  { id: 'REF+O', label: 'Référence + Orage', orage: true },
+  { id: 'R2-12+O', label: 'R2, Essence 12 + Orage', croissance: CROISSANCE_R2, orage: true },
+  { id: 'R2-10+O', label: 'R2, Essence 10 + Orage', croissance: CROISSANCE_R2, startEssence: 10, orage: true },
 ];
