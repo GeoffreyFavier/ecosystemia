@@ -1,0 +1,133 @@
+# Genèse — Game Design Document (Âge I)
+
+> Nom provisoire : **Genèse**. Prototype navigateur, mobile portrait, thème fantasy sombre et sobre.
+> Ce document décrit **uniquement l'Âge I**, une partie à la fois, sans méta-progression.
+> Les chiffres cités ici vivent dans `src/data/` ; en cas de divergence, le code de `src/data/` fait foi.
+
+## 1. Vision
+
+Un « god game » roguelite. Le joueur est une divinité qui ne pose presque rien elle-même :
+elle choisit les **lois** du monde (cartes d'un grimoire) et accomplit quelques **miracles** ponctuels.
+Le monde est une petite grille d'automate cellulaire qui évolue seule.
+
+Boucle visée, en sessions de ~5 minutes : *choisir des lois → regarder le monde vivre → corriger*.
+
+À terme : plusieurs Âges (éléments → vivant → peuples), méta-progression, mode idle joué par une IA.
+Le moteur est donc pur, déterministe et jouable par un programme.
+
+## 2. Le monde
+
+- Grille **8×8**.
+- Chaque case : **altitude** (0 bas, 1 moyen, 2 haut), **élément**, **âge**
+  (nombre de cycles depuis son dernier changement, remis à 0 à chaque changement) et
+  **lastLawId** (la loi qui l'a transformée en dernier).
+- Éléments : **Vide** (terre nue), **Roche**, **Eau**, **Graine**, **Plante**, **Forêt**, **Feu**, **Cendre**.
+  « **Végétal** » = Plante ou Forêt.
+- Voisinages : **ortho** (4 cases) ou **moore** (8 cases). Hors grille = pas de voisin.
+
+### Génération (déterministe, à partir d'une graine)
+
+1. Altitude : bruit aléatoire lissé par 1 ou 2 passes de moyenne, puis découpé en quantiles
+   pour que les 3 niveaux soient toujours présents.
+2. Un lac connexe (orthogonalement) de 4 à 6 cases d'Eau en altitude basse.
+3. 4 Graines, dont au moins 2 voisines (moore) d'une Eau.
+4. 6 à 8 Roches, de préférence en altitude haute.
+5. Le reste en Vide.
+
+## 3. Structure d'une partie
+
+- **5 saisons maximum**, **8 cycles par saison**.
+- **Objectif** vérifié à la fin de chaque saison : au moins **24 végétaux** dont au moins **8 Forêts**.
+  Atteint → **victoire immédiate**.
+- **Défaite** :
+  - objectif non atteint à la fin de la saison 5 ;
+  - ou **monde mort** : 0 végétal, 0 Graine, et Essence inférieure au coût du miracle de vie le moins cher (Semer).
+- **Essence** de départ : 10. En fin de saison : +1 par Plante, +2 par Forêt, plus les bonus des lois d'Essence.
+- Ordre de fin de saison : Essence → victoire ? → défaite ? → saison suivante.
+
+## 4. Phase d'intervention
+
+Avant chaque saison, y compris la première :
+
+1. **Draft** : 3 lois tirées au hasard dans le pool (hors lois déjà présentes dans le grimoire).
+   Le joueur en prend 1 ou passe. Tirage pondéré par rareté (60 / 30 / 10).
+2. **Grimoire** : 5 emplacements maximum, 2 lois de départ. Le joueur peut réordonner, retirer une loi,
+   et remplacer une loi quand le grimoire est plein.
+3. **Miracles**, payés en Essence. Plusieurs par phase ; tout est annulable tant que la saison n'est pas lancée.
+
+   | Miracle   | Coût | Effet                                   |
+   |-----------|------|------------------------------------------|
+   | Semer     | 2    | une Graine sur un Vide ou une Cendre     |
+   | Source    | 4    | une Eau sur un Vide                      |
+   | Soulever  | 3    | altitude +1 d'une case (maximum 2)       |
+   | Embraser  | 1    | un Feu sur un végétal (brûlis volontaire)|
+4. **Aperçu** : surligne les cases qui changeraient au prochain cycle, avec l'élément d'arrivée.
+   **Lancer la saison**.
+
+## 5. Déroulement d'un cycle
+
+Le numéro de cycle est **global** (1, 2, 3 … sur toute la partie).
+
+**A. Événements.** Pour chaque loi de type *event* du grimoire, dans l'ordre du grimoire, si
+`numéro de cycle % période == 0`, l'appliquer (séquentiellement, sur la grille vivante).
+
+**B. Cellules.** Calcul **simultané** à partir d'un instantané de la grille (pris après A).
+Pour chaque case, on évalue dans cet ordre et on s'arrête à la première règle qui s'applique :
+
+1. Lois de **protection** du grimoire : si l'une s'applique, la case ne change pas.
+2. Lois naturelles de **catastrophe** : Feu → Cendre ; un végétal ayant ≥ 1 Feu voisin (ortho) → Feu.
+3. Lois de **transformation** du grimoire, **dans l'ordre du grimoire**.
+4. Lois naturelles d'**usure** : Graine d'âge ≥ 4 → Vide ; Cendre d'âge ≥ 6 → Vide.
+5. Sinon rien ne change.
+
+**C. Mise à jour.** Âges (+1 si inchangée, 0 si changée), `lastLawId`, journal.
+
+Les lois naturelles sont toujours actives, hors grimoire, et affichées dans l'UI.
+Le moteur produit un **journal** par cycle (case, de → vers, loi) que l'UI rejoue.
+
+## 6. Lois
+
+Les lois sont des **données** interprétées par un petit moteur de conditions.
+Conditions disponibles : élément ciblé, nombre de voisins d'un type (min/max, ortho/moore, filtre
+d'altitude relative plus haut/plus bas), voisin dans une direction donnée, âge minimum, altitude de la case,
+plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge I.
+
+### Lois de départ (dans le grimoire)
+
+- **Germination** (transfo) : Graine avec ≥ 1 Eau voisine (moore) → Plante.
+- **Croissance** (transfo) : Plante avec ≥ 3 végétaux voisins (moore) → Forêt.
+
+### Pool (14)
+
+| Loi | Type | Rareté | Effet |
+|-----|------|--------|-------|
+| Dissémination | transfo | commune | Vide/Cendre avec ≥ 2 Forêts voisines (moore) → Graine |
+| Pollen | transfo | commune | Vide avec ≥ 3 Plantes voisines (moore) → Graine |
+| Vent d'ouest | transfo | peu commune | Vide dont le voisin direct à l'ouest est un végétal → Graine |
+| Cendre fertile | transfo | commune | Cendre avec ≥ 1 végétal voisin (moore) → Plante |
+| Ruissellement | transfo | commune | Vide avec un voisin ortho Eau d'altitude strictement supérieure → Eau |
+| Érosion | transfo | peu commune | Roche avec ≥ 3 Eau voisines (moore) → Vide |
+| Lichen | transfo | rare | Roche d'âge ≥ 6 avec ≥ 1 Forêt voisine (moore) → Plante |
+| Mangrove | transfo | rare | Eau avec ≥ 4 Forêts voisines (moore) → Forêt |
+| Racines humides | protection | commune | Végétal avec ≥ 1 Eau voisine (ortho) ne change pas |
+| Pluie des cimes | event /4 | peu commune | Chaque Vide d'altitude 2 → Eau |
+| Foudre | event /5 | rare | La Forêt la plus haute devient Feu (égalité : première ligne par ligne ; aucune Forêt : rien) |
+| Offrande | essence | peu commune | +1 Essence par Forêt en fin de saison |
+| Cycle des cendres | essence | peu commune | +1 Essence chaque fois qu'un Feu devient Cendre |
+| Sources sacrées | essence | rare | En fin de saison, +1 Essence par Eau ayant ≥ 1 Forêt voisine (moore) |
+
+## 7. Interface (mobile portrait, ~380 px)
+
+- En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/24, forêts b/8) avec barres.
+- Grille 8×8 pleine largeur : fond = altitude (3 teintes de terre), emoji d'élément avec fond coloré léger.
+- Sous la grille : grimoire (↑ ↓ ✕), lois naturelles (repliables), barre des miracles, Aperçu / Lancer la saison.
+- Miracle : taper le miracle puis la case (cases valides surlignées). Taper une case sans miracle ouvre
+  l'inspecteur (élément, altitude, âge, « transformée par »).
+- Saison : ~400 ms par cycle, clignotement des cases modifiées, bouton « Passer », résumé de fin de saison.
+- Mode debug : cycle par cycle + curseur d'historique de la dernière saison.
+- Écrans de draft, de victoire et de défaite (avec stats). Graine affichée, « Nouvelle partie », « Rejouer cette graine ».
+- Sauvegarde automatique dans `localStorage`.
+
+## 8. Hors périmètre
+
+Âges II et III, méta-progression, mode idle (le moteur est prêt), sons, assets graphiques finaux.
