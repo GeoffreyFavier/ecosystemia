@@ -24,7 +24,7 @@ Chaque règle ambiguë a été tranchée au plus simple. À revalider après les
    y compris en Forêt). C'est volontaire : la loi est un compromis (immunité au feu contre arrêt de la croissance
    au bord de l'eau). À surveiller en test.
 7. **Graines de départ « voisines d'une Eau »** : un des 6 voisins est de l'Eau (comme Germination).
-8. **Draft.** La pondération 60/30/10 est appliquée *par palier de rareté* (on tire d'abord le palier, puis une loi
+8. **Révélation (draft).** La pondération 60/30/10 est appliquée *par palier de rareté* (on tire d'abord le palier, puis une loi
    uniformément dedans), sans doublon ni loi déjà au grimoire. Si le grimoire est plein, prendre une loi impose de
    choisir laquelle remplacer. Une loi retirée du grimoire retourne dans le pool.
 9. **Annulation des miracles.** Pile (dernier lancé, premier annulé) + « tout annuler ». Les modifications du

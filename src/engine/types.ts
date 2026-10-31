@@ -40,6 +40,8 @@ export type Rarity = 'common' | 'uncommon' | 'rare';
 
 interface LawBase {
   id: string;
+  /** Emoji shown next to the law name. */
+  icon: string;
   name: string;
   /** One-line description shown in the UI. */
   description: string;

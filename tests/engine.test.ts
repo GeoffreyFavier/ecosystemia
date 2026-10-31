@@ -425,6 +425,7 @@ describe('custom escape hatch', () => {
     registerCustomCondition('only-first-column', (_grid, index) => index % GRID_COLS === 0);
     LAW_BY_ID['test-custom'] = {
       id: 'test-custom',
+      icon: '🧪',
       name: 'Test',
       description: 'test',
       kind: 'transform',

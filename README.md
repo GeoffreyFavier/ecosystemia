@@ -1,8 +1,8 @@
 # Genèse
 
 Prototype de « god game » roguelite pour navigateur mobile. Tu es une divinité : tu ne poses presque rien,
-tu choisis les **lois** du monde (cartes d'un grimoire), tu fais quelques **miracles**, et tu regardes une petite
-grille d'automate cellulaire vivre seule. Objectif de l'Âge I : 24 végétaux dont 8 Forêts en 5 saisons.
+tu choisis les **lois** du monde (les entrées d'un grimoire), tu fais quelques **miracles**, et tu regardes une petite
+carte hexagonale d'automate cellulaire vivre seule. Objectif de l'Âge I : 40 végétaux dont 14 Forêts en 5 saisons.
 
 Règles complètes : [`docs/GDD.md`](docs/GDD.md) · choix et questions ouvertes : [`docs/QUESTIONS.md`](docs/QUESTIONS.md).
 

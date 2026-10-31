@@ -4,6 +4,7 @@ import type { Law } from '../engine/types.ts';
 export const START_LAW_DEFS: readonly Law[] = [
   {
     id: 'germination',
+    icon: '🌱',
     name: 'Germination',
     description: 'Graine avec ≥ 1 Eau voisine → Plante.',
     kind: 'transform',
@@ -16,6 +17,7 @@ export const START_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'croissance',
+    icon: '🌲',
     name: 'Croissance',
     description: 'Plante avec ≥ 3 végétaux voisins → Forêt.',
     kind: 'transform',
@@ -32,6 +34,7 @@ export const START_LAW_DEFS: readonly Law[] = [
 export const POOL_LAW_DEFS: readonly Law[] = [
   {
     id: 'dissemination',
+    icon: '🍃',
     name: 'Dissémination',
     description: 'Vide ou Cendre avec ≥ 2 Forêts voisines → Graine.',
     kind: 'transform',
@@ -44,6 +47,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'pollen',
+    icon: '🌼',
     name: 'Pollen',
     description: 'Vide avec ≥ 3 Plantes voisines → Graine.',
     kind: 'transform',
@@ -56,6 +60,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'vent-ouest',
+    icon: '💨',
     name: 'Vent d’ouest',
     description: 'Vide dont le voisin de l’ouest est un végétal → Graine.',
     kind: 'transform',
@@ -68,6 +73,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'cendre-fertile',
+    icon: '♻️',
     name: 'Cendre fertile',
     description: 'Cendre avec ≥ 1 végétal voisin → Plante.',
     kind: 'transform',
@@ -80,6 +86,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'ruissellement',
+    icon: '💦',
     name: 'Ruissellement',
     description: 'Vide avec une Eau plus haute juste à côté (ortho) → Eau.',
     kind: 'transform',
@@ -92,6 +99,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'erosion',
+    icon: '⏳',
     name: 'Érosion',
     description: 'Roche avec ≥ 3 Eaux voisines → Vide.',
     kind: 'transform',
@@ -104,6 +112,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'lichen',
+    icon: '🍄',
     name: 'Lichen',
     description: 'Roche d’âge ≥ 6 avec ≥ 1 Forêt voisine → Plante.',
     kind: 'transform',
@@ -119,6 +128,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'mangrove',
+    icon: '🌊',
     name: 'Mangrove',
     description: 'Eau avec ≥ 3 Forêts voisines → Forêt.',
     kind: 'transform',
@@ -131,6 +141,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'racines-humides',
+    icon: '🛡️',
     name: 'Racines humides',
     description: 'Un végétal au bord de l’eau (ortho) ne change pas.',
     kind: 'protection',
@@ -142,6 +153,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'pluie-cimes',
+    icon: '🌧️',
     name: 'Pluie des cimes',
     description: 'Tous les 4 cycles, chaque Vide d’altitude haute → Eau.',
     kind: 'event',
@@ -156,6 +168,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'foudre',
+    icon: '⚡',
     name: 'Foudre',
     description: 'Tous les 5 cycles, la Forêt la plus haute prend feu.',
     kind: 'event',
@@ -165,6 +178,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'offrande',
+    icon: '🙏',
     name: 'Offrande',
     description: '+1 Essence par Forêt en fin de saison.',
     kind: 'essence',
@@ -173,6 +187,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'cycle-cendres',
+    icon: '🕯️',
     name: 'Cycle des cendres',
     description: '+1 Essence chaque fois qu’un Feu devient Cendre.',
     kind: 'essence',
@@ -181,6 +196,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   },
   {
     id: 'sources-sacrees',
+    icon: '✨',
     name: 'Sources sacrées',
     description: 'En fin de saison, +1 Essence par Eau avec ≥ 1 Forêt voisine.',
     kind: 'essence',

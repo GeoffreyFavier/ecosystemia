@@ -7,7 +7,7 @@
 ## 1. Vision
 
 Un « god game » roguelite. Le joueur est une divinité qui ne pose presque rien elle-même :
-elle choisit les **lois** du monde (cartes d'un grimoire) et accomplit quelques **miracles** ponctuels.
+elle choisit les **lois** du monde (les entrées d'un grimoire) et accomplit quelques **miracles** ponctuels.
 Le monde est une petite grille d'automate cellulaire qui évolue seule.
 
 Boucle visée, en sessions de ~5 minutes : *choisir des lois → regarder le monde vivre → corriger*.
@@ -52,7 +52,7 @@ Le moteur est donc pur, déterministe et jouable par un programme.
 
 Avant chaque saison, y compris la première :
 
-1. **Draft** : 3 lois tirées au hasard dans le pool (hors lois déjà présentes dans le grimoire).
+1. **Révélation** (le « draft ») : 3 lois tirées au hasard dans le pool (hors lois déjà présentes dans le grimoire).
    Le joueur en prend 1 ou passe. Tirage pondéré par rareté (60 / 30 / 10).
 2. **Grimoire** : 5 emplacements maximum, 2 lois de départ. Le joueur peut réordonner, retirer une loi,
    et remplacer une loi quand le grimoire est plein.
@@ -119,7 +119,10 @@ plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge 
 | Cycle des cendres | essence | peu commune | +1 Essence chaque fois qu'un Feu devient Cendre |
 | Sources sacrées | essence | rare | En fin de saison, +1 Essence par Eau ayant ≥ 1 Forêt voisine |
 
-## 7. Interface (mobile portrait, ~380 px)
+## 7. Interface
+
+Le jeu ne parle pas de « cartes » : les lois sont une liste sobre (icône, nom, effet en une ligne).
+ (mobile portrait, ~380 px)
 
 - En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/40, forêts b/14) avec barres.
 - Carte hexagonale rendue en **SVG** (un polygone par case, emoji en `<text>`, tap sur le polygone) : fond = altitude
@@ -129,7 +132,7 @@ plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge 
   l'inspecteur (élément, altitude, âge, « transformée par »).
 - Saison : ~400 ms par cycle, clignotement des cases modifiées, bouton « Passer », résumé de fin de saison.
 - Mode debug : cycle par cycle + curseur d'historique de la dernière saison.
-- Écrans de draft, de victoire et de défaite (avec stats). Graine affichée, « Nouvelle partie », « Rejouer cette graine ».
+- Révélation, victoire et défaite (avec stats). Graine affichée, « Nouvelle partie », « Rejouer cette graine ».
 - Sauvegarde automatique dans `localStorage`.
 
 ## 8. Hors périmètre

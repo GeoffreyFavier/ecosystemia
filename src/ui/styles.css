@@ -348,16 +348,13 @@ details.panel summary {
   border-radius: 8px;
   padding: 6px 8px;
 }
-.law.kind-protection,
-.card.kind-protection {
+.law.kind-protection {
   border-left-color: #4aa3d6;
 }
-.law.kind-event,
-.card.kind-event {
+.law.kind-event {
   border-left-color: #d6764a;
 }
-.law.kind-essence,
-.card.kind-essence {
+.law.kind-essence {
   border-left-color: var(--accent);
 }
 .law.empty {
@@ -367,7 +364,14 @@ details.panel summary {
   justify-content: center;
   min-height: 40px;
 }
+.law-icon {
+  font-size: 22px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
 .law-main {
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -396,31 +400,24 @@ details.panel summary {
   gap: 8px;
 }
 
-/* ---- Draft */
-.cards {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* ---- Revelation */
+.revelation .law {
+  padding: 0;
 }
-.card {
-  text-align: left;
+.law-pick {
+  all: unset;
+  box-sizing: border-box;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  background: var(--bg-2);
-  border: 1px solid var(--panel-border);
-  border-left: 4px solid var(--accent-2);
-  border-radius: 8px;
-  padding: 10px 12px;
-  min-height: 64px;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px;
   cursor: pointer;
+  color: var(--text);
 }
-.card.rarity-rare {
-  box-shadow: 0 0 12px #c9a24b44;
-  border-color: #c9a24b88;
-}
-.card.rarity-uncommon {
-  border-color: #8a6fd688;
+.law-pick:active {
+  background: #2a2145;
 }
 
 /* ---- Miracles */
