@@ -1,4 +1,4 @@
-import { START_ESSENCE, START_LAWS } from '../data/constants.ts';
+import { START, START_LAWS } from '../data/constants.ts';
 import { LAW_BY_ID } from '../data/laws.ts';
 import { generateGrid } from './generate.ts';
 import { createRng } from './rng.ts';
@@ -29,7 +29,7 @@ export function newGame(seed: number): GameState {
     season: 1,
     cycle: 0,
     cycleInSeason: 0,
-    essence: START_ESSENCE,
+    essence: START.essence,
     grid,
     grimoire: [...START_LAWS],
     draft: null,
@@ -37,7 +37,7 @@ export function newGame(seed: number): GameState {
     history: [],
     seasonChanges: {},
     seasonEssence: 0,
-    seasonStartEssence: START_ESSENCE,
+    seasonStartEssence: START.essence,
   };
   return drawDraft(base);
 }

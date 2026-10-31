@@ -8,3 +8,4 @@ export * from './grid.ts';
 export * from './conditions.ts';
 export * from './custom.ts';
 export * from './policies.ts';
+export * from './telemetry.ts';

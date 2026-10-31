@@ -5,7 +5,8 @@ export const GRID_COLS = 12;
 export const GRID_ROWS = 9;
 export const MAX_SEASONS = 5;
 export const CYCLES_PER_SEASON = 8;
-export const START_ESSENCE = 10;
+/** Mutable on purpose (the balance simulator overrides it to compare variants); never mutate in the game. */
+export const START: { essence: number } = { essence: 10 };
 export const GRIMOIRE_SLOTS = 5;
 export const START_LAWS: readonly string[] = ['germination', 'croissance'];
 export const DRAFT_SIZE = 3;
@@ -13,7 +14,7 @@ export const DRAFT_SIZE = 3;
 /** Draft weights per rarity tier (60 / 30 / 10). */
 export const RARITY_WEIGHTS = { common: 60, uncommon: 30, rare: 10 } as const;
 
-export const GOAL = { vegetal: 40, forests: 14 } as const;
+export const GOAL: { vegetal: number; forests: number } = { vegetal: 40, forests: 14 };
 
 export const ESSENCE_PER_PLANT = 1;
 export const ESSENCE_PER_FOREST = 2;
