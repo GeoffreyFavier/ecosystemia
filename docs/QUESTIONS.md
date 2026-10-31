@@ -23,27 +23,43 @@ Chaque règle ambiguë a été tranchée au plus simple. À revalider après les
 6. **Racines humides** protège aussi de la Croissance (un végétal protégé « ne change pas », quoi qu'il arrive,
    y compris en Forêt). C'est volontaire : la loi est un compromis (immunité au feu contre arrêt de la croissance
    au bord de l'eau). À surveiller en test.
-7. **Graines de départ « voisines d'une Eau »** : voisinage moore (comme Germination).
-8. **Draft.** La pondération 60/30/10 est appliquée *par palier de rareté* (on tire d'abord le palier, puis une loi
+7. **Graines de départ « voisines d'une Eau »** : un des 6 voisins est de l'Eau (comme Germination).
+8. **Révélation (draft).** La pondération 60/30/10 est appliquée *par palier de rareté* (on tire d'abord le palier, puis une loi
    uniformément dedans), sans doublon ni loi déjà au grimoire. Si le grimoire est plein, prendre une loi impose de
    choisir laquelle remplacer. Une loi retirée du grimoire retourne dans le pool.
 9. **Annulation des miracles.** Pile (dernier lancé, premier annulé) + « tout annuler ». Les modifications du
    grimoire et le draft ne sont pas annulables (le tirage consomme la graine aléatoire).
 10. **Altitude.** Les 3 niveaux sont garantis en découpant le bruit lissé en quantiles (30 / 40 / 30 %).
 
+## Mise en page hexagonale
+
+11. **Portrait** : la carte tient en 390 px de large, donc des hexagones d'environ 28 px (sous la cible de 36 px,
+    qui ne concerne que le paysage). Jouable mais serré au doigt ; si le portrait devient important, prévoir un zoom
+    ou un défilement horizontal de la carte.
+12. **Inspecteur en bulle** : ancrée en % de la carte (donc suit la mise à l'échelle), placée au-dessus de la case, ou
+    en dessous pour les 3 premières rangées ; elle masque brièvement les cases voisines.
+13. **Révélation en surcouche** : la carte est visible mais assombrie pendant le choix. Le curseur d'historique (debug)
+    n'est utilisable qu'après avoir fermé la révélation (prendre une loi ou passer).
+
 ## Équilibrage (script `npm run sim`, 500 parties, graines 1–500)
 
-| Politique | Victoires | Saison moyenne de victoire | Essence finale moy. |
-|-----------|-----------|----------------------------|---------------------|
-| `naive` (1re loi, sème près de l'eau) | 11,4 % | 3,9 | 21,8 |
-| `greedy` (lois classées, Source quand le rivage est plein) | 82,6 % | 4,4 | 51,7 |
+Carte hexagonale 12×9, objectif 40 végétaux dont 14 Forêts, 2 lacs, 10–14 Roches, 6 Graines.
 
-- L'objectif n'est ni impossible ni trivial : le bot naïf gagne parfois, un bot qui pense en « rivages » gagne presque
-  toujours mais tard (saisons 4–5). **Aucun chiffre n'a été modifié** après ces résultats.
-- Constat de design : **les plantes n'apparaissent que près de l'eau** (Germination) sauf via Cendre fertile et
-  Lichen. L'expansion passe donc par la création d'eau (Source, Ruissellement, Pluie des cimes) ou par le feu
-  (Embraser + Cendre fertile). Le bot ne joue ni Soulever ni Embraser : un humain a plus d'outils.
-- L'Essence s'accumule en fin de partie (50+ pour le bot) : il manque de puits d'Essence si le jeu est allongé.
-  À décider avec le futur contenu (Âges suivants).
-- Un vrai plafond de difficulté reste à mesurer sur des humains : l'objectif de 8 Forêts exige des agrégats 2D
-  (≥ 3 voisins végétaux), pas des lignes le long du rivage.
+| Politique | Victoires | Saison moy. de victoire | Essence finale moy. | Végétaux finaux moy. (Forêts) |
+|-----------|-----------|-------------------------|---------------------|-------------------------------|
+| `naive` (1re loi, sème près de l'eau) | 5,4 % | 4,7 | 27,7 | 22,4 (3,1) |
+| `greedy` (lois classées, Source quand le rivage est plein) | 23,8 % | 4,9 | 52,6 | 38,1 (11,2) |
+
+*Avant le passage à l'hexagonal (8×8, objectif 24/8) : naive 11,4 %, greedy 82,6 %.*
+
+- **Ni impossible ni trivial.** Le bot naïf gagne parfois (5 %), le bot « malin » environ une fois sur quatre, et
+  presque toutes les victoires arrivent à la **saison 5** : l'objectif est serré. Les bots ne jouent ni Soulever ni
+  Embraser (le feu comme moteur de croissance via Cendre fertile) : un humain a plus d'outils, la difficulté réelle
+  est donc probablement un peu plus basse. **Aucun chiffre n'a été retouché** pour la sim, comme demandé.
+- Le goulot reste les **14 Forêts** : le bot `greedy` atteint 38 végétaux en moyenne (presque l'objectif) mais seulement
+  11 Forêts. Si c'est trop dur en jeu réel, le levier le plus simple est `GOAL.forests` (ex. 12) dans `src/data/constants.ts`.
+- À 6 voisins, Croissance (≥ 3 végétaux) se déclenche plus facilement qu'à 8 voisins moore sur 4 axes, mais les Forêts
+  sont aussi plus exposées au feu (le feu touche les 6 voisins).
+- L'Essence s'accumule encore en fin de partie (50+ pour le bot) : pas assez de puits d'Essence.
+- Les plantes n'apparaissent qu'au bord de l'eau (Germination), sauf via Cendre fertile et Lichen : l'expansion passe
+  par la création d'eau (Source, Ruissellement, Pluie des cimes) ou par le feu.

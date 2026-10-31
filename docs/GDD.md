@@ -7,7 +7,7 @@
 ## 1. Vision
 
 Un « god game » roguelite. Le joueur est une divinité qui ne pose presque rien elle-même :
-elle choisit les **lois** du monde (cartes d'un grimoire) et accomplit quelques **miracles** ponctuels.
+elle choisit les **lois** du monde (les entrées d'un grimoire) et accomplit quelques **miracles** ponctuels.
 Le monde est une petite grille d'automate cellulaire qui évolue seule.
 
 Boucle visée, en sessions de ~5 minutes : *choisir des lois → regarder le monde vivre → corriger*.
@@ -17,27 +17,30 @@ Le moteur est donc pur, déterministe et jouable par un programme.
 
 ## 2. Le monde
 
-- Grille **8×8**.
+- Carte **hexagonale** « pointy-top », **12 colonnes × 9 rangées** (`GRID_COLS`, `GRID_ROWS` dans `src/data/constants.ts`).
+  Stockage en coordonnées *odd-r offset* (les rangées impaires sont décalées à droite), calculs de voisinage et de
+  distance en coordonnées *axiales* ([Red Blob Games](https://www.redblobgames.com/grids/hexagons/)).
 - Chaque case : **altitude** (0 bas, 1 moyen, 2 haut), **élément**, **âge**
   (nombre de cycles depuis son dernier changement, remis à 0 à chaque changement) et
   **lastLawId** (la loi qui l'a transformée en dernier).
 - Éléments : **Vide** (terre nue), **Roche**, **Eau**, **Graine**, **Plante**, **Forêt**, **Feu**, **Cendre**.
   « **Végétal** » = Plante ou Forêt.
-- Voisinages : **ortho** (4 cases) ou **moore** (8 cases). Hors grille = pas de voisin.
+- **6 voisins** par case, tous équivalents (plus de distinction ortho/moore). Directions : **E, O, NE, NO, SE, SO**.
+  Hors carte = pas de voisin.
 
 ### Génération (déterministe, à partir d'une graine)
 
 1. Altitude : bruit aléatoire lissé par 1 ou 2 passes de moyenne, puis découpé en quantiles
    pour que les 3 niveaux soient toujours présents.
-2. Un lac connexe (orthogonalement) de 4 à 6 cases d'Eau en altitude basse.
-3. 4 Graines, dont au moins 2 voisines (moore) d'une Eau.
-4. 6 à 8 Roches, de préférence en altitude haute.
+2. **2 lacs** connexes de 4 à 7 cases d'Eau chacun, en altitude basse (ils ne se touchent pas).
+3. **6 Graines**, dont au moins **3** voisines d'une Eau.
+4. **10 à 14 Roches**, de préférence en altitude haute.
 5. Le reste en Vide.
 
 ## 3. Structure d'une partie
 
 - **5 saisons maximum**, **8 cycles par saison**.
-- **Objectif** vérifié à la fin de chaque saison : au moins **24 végétaux** dont au moins **8 Forêts**.
+- **Objectif** vérifié à la fin de chaque saison : au moins **40 végétaux** dont au moins **14 Forêts**.
   Atteint → **victoire immédiate**.
 - **Défaite** :
   - objectif non atteint à la fin de la saison 5 ;
@@ -49,7 +52,7 @@ Le moteur est donc pur, déterministe et jouable par un programme.
 
 Avant chaque saison, y compris la première :
 
-1. **Draft** : 3 lois tirées au hasard dans le pool (hors lois déjà présentes dans le grimoire).
+1. **Révélation** (le « draft ») : 3 lois tirées au hasard dans le pool (hors lois déjà présentes dans le grimoire).
    Le joueur en prend 1 ou passe. Tirage pondéré par rareté (60 / 30 / 10).
 2. **Grimoire** : 5 emplacements maximum, 2 lois de départ. Le joueur peut réordonner, retirer une loi,
    et remplacer une loi quand le grimoire est plein.
@@ -75,7 +78,7 @@ Le numéro de cycle est **global** (1, 2, 3 … sur toute la partie).
 Pour chaque case, on évalue dans cet ordre et on s'arrête à la première règle qui s'applique :
 
 1. Lois de **protection** du grimoire : si l'une s'applique, la case ne change pas.
-2. Lois naturelles de **catastrophe** : Feu → Cendre ; un végétal ayant ≥ 1 Feu voisin (ortho) → Feu.
+2. Lois naturelles de **catastrophe** : Feu → Cendre ; un végétal ayant ≥ 1 Feu voisin → Feu.
 3. Lois de **transformation** du grimoire, **dans l'ordre du grimoire**.
 4. Lois naturelles d'**usure** : Graine d'âge ≥ 4 → Vide ; Cendre d'âge ≥ 6 → Vide.
 5. Sinon rien ne change.
@@ -88,44 +91,58 @@ Le moteur produit un **journal** par cycle (case, de → vers, loi) que l'UI rej
 ## 6. Lois
 
 Les lois sont des **données** interprétées par un petit moteur de conditions.
-Conditions disponibles : élément ciblé, nombre de voisins d'un type (min/max, ortho/moore, filtre
+Conditions disponibles : élément ciblé, nombre de voisins d'un type (min/max, filtre
 d'altitude relative plus haut/plus bas), voisin dans une direction donnée, âge minimum, altitude de la case,
 plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge I.
 
 ### Lois de départ (dans le grimoire)
 
-- **Germination** (transfo) : Graine avec ≥ 1 Eau voisine (moore) → Plante.
-- **Croissance** (transfo) : Plante avec ≥ 3 végétaux voisins (moore) → Forêt.
+- **Germination** (transfo) : Graine avec ≥ 1 Eau voisine → Plante.
+- **Croissance** (transfo) : Plante avec ≥ 3 végétaux voisins → Forêt.
 
 ### Pool (14)
 
 | Loi | Type | Rareté | Effet |
 |-----|------|--------|-------|
-| Dissémination | transfo | commune | Vide/Cendre avec ≥ 2 Forêts voisines (moore) → Graine |
-| Pollen | transfo | commune | Vide avec ≥ 3 Plantes voisines (moore) → Graine |
-| Vent d'ouest | transfo | peu commune | Vide dont le voisin direct à l'ouest est un végétal → Graine |
-| Cendre fertile | transfo | commune | Cendre avec ≥ 1 végétal voisin (moore) → Plante |
-| Ruissellement | transfo | commune | Vide avec un voisin ortho Eau d'altitude strictement supérieure → Eau |
-| Érosion | transfo | peu commune | Roche avec ≥ 3 Eau voisines (moore) → Vide |
-| Lichen | transfo | rare | Roche d'âge ≥ 6 avec ≥ 1 Forêt voisine (moore) → Plante |
-| Mangrove | transfo | rare | Eau avec ≥ 4 Forêts voisines (moore) → Forêt |
-| Racines humides | protection | commune | Végétal avec ≥ 1 Eau voisine (ortho) ne change pas |
+| Dissémination | transfo | commune | Vide/Cendre avec ≥ 2 Forêts voisines → Graine |
+| Pollen | transfo | commune | Vide avec ≥ 3 Plantes voisines → Graine |
+| Vent d'ouest | transfo | peu commune | Vide dont le voisin direct à l'ouest (direction O) est un végétal → Graine |
+| Cendre fertile | transfo | commune | Cendre avec ≥ 1 végétal voisin → Plante |
+| Ruissellement | transfo | commune | Vide avec un voisin Eau d'altitude strictement supérieure → Eau |
+| Érosion | transfo | peu commune | Roche avec ≥ 3 Eau voisines → Vide |
+| Lichen | transfo | rare | Roche d'âge ≥ 6 avec ≥ 1 Forêt voisine → Plante |
+| Mangrove | transfo | rare | Eau avec ≥ 3 Forêts voisines → Forêt |
+| Racines humides | protection | commune | Végétal avec ≥ 1 Eau voisine ne change pas |
 | Pluie des cimes | event /4 | peu commune | Chaque Vide d'altitude 2 → Eau |
 | Foudre | event /5 | rare | La Forêt la plus haute devient Feu (égalité : première ligne par ligne ; aucune Forêt : rien) |
 | Offrande | essence | peu commune | +1 Essence par Forêt en fin de saison |
 | Cycle des cendres | essence | peu commune | +1 Essence chaque fois qu'un Feu devient Cendre |
-| Sources sacrées | essence | rare | En fin de saison, +1 Essence par Eau ayant ≥ 1 Forêt voisine (moore) |
+| Sources sacrées | essence | rare | En fin de saison, +1 Essence par Eau ayant ≥ 1 Forêt voisine |
 
-## 7. Interface (mobile portrait, ~380 px)
+## 7. Interface
 
-- En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/24, forêts b/8) avec barres.
-- Grille 8×8 pleine largeur : fond = altitude (3 teintes de terre), emoji d'élément avec fond coloré léger.
-- Sous la grille : grimoire (↑ ↓ ✕), lois naturelles (repliables), barre des miracles, Aperçu / Lancer la saison.
-- Miracle : taper le miracle puis la case (cases valides surlignées). Taper une case sans miracle ouvre
-  l'inspecteur (élément, altitude, âge, « transformée par »).
+Le jeu ne parle pas de « cartes » : les lois sont une liste sobre (icône, nom, effet en une ligne).
+
+### Mise en page
+
+- **Paysage (prioritaire)** : la carte occupe toute la hauteur, à gauche (~65 % de la largeur). À droite, un panneau
+  défilable avec, dans l'ordre : objectif et Essence, grimoire, lois naturelles (repliables), miracles, boutons
+  Aperçu et Lancer la saison (puis graine, debug, nouvelle partie).
+  Cible : chaque hexagone fait au moins ~36 px de large sur un écran de 800 × 360 (mesuré : ~38 px).
+- **Portrait** (secondaire, fonctionnel) : la carte en haut, le panneau dessous, en défilement.
+- **Inspecteur** : bulle près de la case touchée (élément, altitude, âge, « transformée par »).
+- **Révélation, victoire et défaite** : surcouche centrée.
+
+### Éléments
+
+- En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/40, forêts b/14) avec barres.
+- Carte hexagonale rendue en **SVG** (un polygone par case, emoji en `<text>`, tap sur le polygone) : fond = altitude
+  (3 teintes de terre), emoji d'élément avec fond coloré léger.
+- Miracle : taper le miracle puis la case (cases valides surlignées). Taper une case sans miracle ouvre l'inspecteur.
 - Saison : ~400 ms par cycle, clignotement des cases modifiées, bouton « Passer », résumé de fin de saison.
 - Mode debug : cycle par cycle + curseur d'historique de la dernière saison.
-- Écrans de draft, de victoire et de défaite (avec stats). Graine affichée, « Nouvelle partie », « Rejouer cette graine ».
+- Révélation : choisir 1 loi parmi 3 ou passer ; si le grimoire est plein, choisir la loi remplacée.
+- Fin de partie : bilan avec stats, « Nouvelle partie », « Rejouer cette graine », « Voir le monde ».
 - Sauvegarde automatique dans `localStorage`.
 
 ## 8. Hors périmètre

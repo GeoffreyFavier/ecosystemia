@@ -6,9 +6,11 @@ interface Props {
   game: GameState;
   onNew: () => void;
   onReplay: () => void;
+  /** Dismiss the overlay to look at the final world. */
+  onClose: () => void;
 }
 
-export function EndScreen({ game, onNew, onReplay }: Props) {
+export function EndScreen({ game, onNew, onReplay, onClose }: Props) {
   const won = game.phase === 'won';
   const last = game.history[game.history.length - 1];
   const totals: Record<string, number> = {};
@@ -40,6 +42,9 @@ export function EndScreen({ game, onNew, onReplay }: Props) {
         </button>
         <button class="btn" onClick={onReplay}>
           Rejouer cette graine
+        </button>
+        <button class="btn ghost" onClick={onClose}>
+          Voir le monde
         </button>
       </div>
     </section>

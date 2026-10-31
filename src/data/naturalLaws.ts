@@ -7,6 +7,7 @@ import type { NaturalLaw } from '../engine/types.ts';
 export const NATURAL_CATASTROPHES: readonly NaturalLaw[] = [
   {
     id: 'burnout',
+    icon: '🔥',
     name: 'Combustion',
     description: 'Un Feu devient Cendre.',
     category: 'catastrophe',
@@ -14,12 +15,13 @@ export const NATURAL_CATASTROPHES: readonly NaturalLaw[] = [
   },
   {
     id: 'spread',
+    icon: '🌋',
     name: 'Embrasement',
-    description: 'Un végétal avec au moins 1 Feu voisin (ortho) prend feu.',
+    description: 'Un végétal avec au moins 1 Feu voisin prend feu.',
     category: 'catastrophe',
     rule: {
       target: 'vegetal',
-      conditions: [{ type: 'neighbors', element: 'fire', hood: 'ortho', min: 1 }],
+      conditions: [{ type: 'neighbors', element: 'fire', min: 1 }],
       result: 'fire',
     },
   },
@@ -28,6 +30,7 @@ export const NATURAL_CATASTROPHES: readonly NaturalLaw[] = [
 export const NATURAL_WEAR: readonly NaturalLaw[] = [
   {
     id: 'wither',
+    icon: '🥀',
     name: 'Flétrissement',
     description: 'Une Graine d’âge 4 ou plus redevient Vide.',
     category: 'wear',
@@ -35,6 +38,7 @@ export const NATURAL_WEAR: readonly NaturalLaw[] = [
   },
   {
     id: 'settle',
+    icon: '🌫️',
     name: 'Tassement',
     description: 'Une Cendre d’âge 6 ou plus redevient Vide.',
     category: 'wear',

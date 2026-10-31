@@ -20,7 +20,7 @@ function evalCondition(grid: readonly Cell[], index: number, cond: Condition): b
   switch (cond.type) {
     case 'neighbors': {
       let count = 0;
-      for (const n of neighborsOf(index, cond.hood)) {
+      for (const n of neighborsOf(index)) {
         const nc = grid[n]!;
         if (!matchesElement(nc.element, cond.element)) continue;
         if (cond.relativeAltitude === 'higher' && !(nc.altitude > cell.altitude)) continue;

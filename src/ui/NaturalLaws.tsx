@@ -7,7 +7,7 @@ export function NaturalLaws() {
       <ul class="natural">
         {NATURAL_LAWS.map((l) => (
           <li key={l.id}>
-            <strong>{l.name}</strong> <span class="law-kind">{l.category === 'catastrophe' ? 'catastrophe' : 'usure'}</span>
+            <span aria-hidden="true">{l.icon}</span> <strong>{l.name}</strong> <span class="law-kind">{l.category === 'catastrophe' ? 'catastrophe' : 'usure'}</span>
             <div class="law-desc">{l.description}</div>
           </li>
         ))}
