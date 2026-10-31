@@ -122,17 +122,27 @@ plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge 
 ## 7. Interface
 
 Le jeu ne parle pas de « cartes » : les lois sont une liste sobre (icône, nom, effet en une ligne).
- (mobile portrait, ~380 px)
+
+### Mise en page
+
+- **Paysage (prioritaire)** : la carte occupe toute la hauteur, à gauche (~65 % de la largeur). À droite, un panneau
+  défilable avec, dans l'ordre : objectif et Essence, grimoire, lois naturelles (repliables), miracles, boutons
+  Aperçu et Lancer la saison (puis graine, debug, nouvelle partie).
+  Cible : chaque hexagone fait au moins ~36 px de large sur un écran de 800 × 360 (mesuré : ~38 px).
+- **Portrait** (secondaire, fonctionnel) : la carte en haut, le panneau dessous, en défilement.
+- **Inspecteur** : bulle près de la case touchée (élément, altitude, âge, « transformée par »).
+- **Révélation, victoire et défaite** : surcouche centrée.
+
+### Éléments
 
 - En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/40, forêts b/14) avec barres.
 - Carte hexagonale rendue en **SVG** (un polygone par case, emoji en `<text>`, tap sur le polygone) : fond = altitude
   (3 teintes de terre), emoji d'élément avec fond coloré léger.
-- Sous la grille : grimoire (↑ ↓ ✕), lois naturelles (repliables), barre des miracles, Aperçu / Lancer la saison.
-- Miracle : taper le miracle puis la case (cases valides surlignées). Taper une case sans miracle ouvre
-  l'inspecteur (élément, altitude, âge, « transformée par »).
+- Miracle : taper le miracle puis la case (cases valides surlignées). Taper une case sans miracle ouvre l'inspecteur.
 - Saison : ~400 ms par cycle, clignotement des cases modifiées, bouton « Passer », résumé de fin de saison.
 - Mode debug : cycle par cycle + curseur d'historique de la dernière saison.
-- Révélation, victoire et défaite (avec stats). Graine affichée, « Nouvelle partie », « Rejouer cette graine ».
+- Révélation : choisir 1 loi parmi 3 ou passer ; si le grimoire est plein, choisir la loi remplacée.
+- Fin de partie : bilan avec stats, « Nouvelle partie », « Rejouer cette graine », « Voir le monde ».
 - Sauvegarde automatique dans `localStorage`.
 
 ## 8. Hors périmètre

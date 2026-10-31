@@ -31,6 +31,16 @@ Chaque règle ambiguë a été tranchée au plus simple. À revalider après les
    grimoire et le draft ne sont pas annulables (le tirage consomme la graine aléatoire).
 10. **Altitude.** Les 3 niveaux sont garantis en découpant le bruit lissé en quantiles (30 / 40 / 30 %).
 
+## Mise en page hexagonale
+
+11. **Portrait** : la carte tient en 390 px de large, donc des hexagones d'environ 28 px (sous la cible de 36 px,
+    qui ne concerne que le paysage). Jouable mais serré au doigt ; si le portrait devient important, prévoir un zoom
+    ou un défilement horizontal de la carte.
+12. **Inspecteur en bulle** : ancrée en % de la carte (donc suit la mise à l'échelle), placée au-dessus de la case, ou
+    en dessous pour les 3 premières rangées ; elle masque brièvement les cases voisines.
+13. **Révélation en surcouche** : la carte est visible mais assombrie pendant le choix. Le curseur d'historique (debug)
+    n'est utilisable qu'après avoir fermé la révélation (prendre une loi ou passer).
+
 ## Équilibrage (script `npm run sim`, 500 parties, graines 1–500)
 
 Carte hexagonale 12×9, objectif 40 végétaux dont 14 Forêts, 2 lacs, 10–14 Roches, 6 Graines.

@@ -88,7 +88,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     id: 'ruissellement',
     icon: '💦',
     name: 'Ruissellement',
-    description: 'Vide avec une Eau plus haute juste à côté (ortho) → Eau.',
+    description: 'Vide avec une Eau voisine plus haute → Eau.',
     kind: 'transform',
     rarity: 'common',
     rule: {
@@ -143,7 +143,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     id: 'racines-humides',
     icon: '🛡️',
     name: 'Racines humides',
-    description: 'Un végétal au bord de l’eau (ortho) ne change pas.',
+    description: 'Un végétal avec ≥ 1 Eau voisine ne change pas.',
     kind: 'protection',
     rarity: 'common',
     rule: {

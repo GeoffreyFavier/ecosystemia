@@ -17,7 +17,7 @@ export const NATURAL_CATASTROPHES: readonly NaturalLaw[] = [
     id: 'spread',
     icon: '🌋',
     name: 'Embrasement',
-    description: 'Un végétal avec au moins 1 Feu voisin (ortho) prend feu.',
+    description: 'Un végétal avec au moins 1 Feu voisin prend feu.',
     category: 'catastrophe',
     rule: {
       target: 'vegetal',

@@ -22,6 +22,8 @@ import { EndScreen } from './EndScreen.tsx';
 import { Grimoire } from './Grimoire.tsx';
 import { Header } from './Header.tsx';
 import { Inspector } from './Inspector.tsx';
+import { Overlay } from './Overlay.tsx';
+import { VIEW_H, VIEW_W } from './hex.ts';
 import { MiracleBar } from './MiracleBar.tsx';
 import { NaturalLaws } from './NaturalLaws.tsx';
 import { SeasonSummary } from './SeasonSummary.tsx';
@@ -43,6 +45,7 @@ export function App() {
   const [miracle, setMiracle] = useState<string | null>(null);
   const [previewOn, setPreviewOn] = useState(false);
   const [inspected, setInspected] = useState<number | null>(null);
+  const [endDismissed, setEndDismissed] = useState(false);
 
   useEffect(() => writeSave({ game, lastRun, pending, debug }), [game, lastRun, pending, debug]);
 
@@ -63,8 +66,9 @@ export function App() {
 
   const viewing = frame !== null && frames[frame] !== undefined;
   const cells = viewing ? frames[frame!]! : game.grid;
-  const canAct = game.phase === 'intervention' && !pending && !viewing && game.draft === null;
-  const canPickDraft = game.phase === 'intervention' && !pending && !viewing && game.draft !== null;
+  const inIntervention = game.phase === 'intervention' && !pending && !viewing;
+  const canPickDraft = inIntervention && game.draft !== null;
+  const canAct = inIntervention && game.draft === null;
 
   const targets = useMemo(
     () => new Set(canAct && miracle ? miracleTargets(game, miracle) : []),
@@ -137,178 +141,198 @@ export function App() {
     setMiracle(null);
     setPreviewOn(false);
     setInspected(null);
+    setEndDismissed(false);
   };
   const confirmAbandon = () => game.phase !== 'intervention' || window.confirm('Abandonner la partie en cours ?');
 
   const playbackDone = pending && frame === CYCLES_PER_SEASON;
   const showHistorySlider = debug && lastRun !== null;
   const gameOver = game.phase === 'won' || game.phase === 'lost';
+  const showEnd = !pending && !viewing && gameOver;
 
   return (
-    <div class="app">
-      <Header
-        season={shownSeason}
-        essence={shownEssence}
-        vegetal={countVegetal(cells)}
-        forests={countElement(cells, 'forest')}
-      />
-
-      <Board
-        cells={cells}
-        targets={targets}
-        flashes={flashes}
-        flashKey={frame ?? 0}
-        preview={preview}
-        selected={inspected}
-        onTap={onTapCell}
-      />
-
-      {viewing && (
-        <div class="playback">
-          {pending && playing && (
-            <button class="btn small" onClick={skipPlayback}>
-              Passer ⏭
-            </button>
-          )}
-          <span class="hint">
-            {frame === 0 ? 'Début de saison' : `Cycle ${frame}/${CYCLES_PER_SEASON}`}
-            {!pending && ' (historique)'}
-          </span>
-          {!pending && (
-            <button class="btn small ghost" onClick={() => setFrame(null)}>
-              Retour au présent
-            </button>
-          )}
-        </div>
-      )}
-
-      {showHistorySlider && (
-        <div class="panel debug">
-          <div class="row">
-            <button
-              class="icon"
-              aria-label="Cycle précédent"
-              disabled={(frame ?? CYCLES_PER_SEASON) <= 0}
-              onClick={() => {
-                setPlaying(false);
-                setFrame(Math.max(0, (frame ?? CYCLES_PER_SEASON) - 1));
-              }}
-            >
-              ◀
-            </button>
-            <input
-              type="range"
-              min={0}
-              max={CYCLES_PER_SEASON}
-              value={frame ?? CYCLES_PER_SEASON}
-              aria-label="Historique de la dernière saison"
-              onInput={(e) => {
-                setPlaying(false);
-                setFrame(Number((e.currentTarget as HTMLInputElement).value));
-              }}
-            />
-            <button
-              class="icon"
-              aria-label="Cycle suivant"
-              disabled={(frame ?? CYCLES_PER_SEASON) >= CYCLES_PER_SEASON}
-              onClick={() => {
-                setPlaying(false);
-                setFrame(Math.min(CYCLES_PER_SEASON, (frame ?? CYCLES_PER_SEASON) + 1));
-              }}
-            >
-              ▶
-            </button>
-          </div>
-          <p class="hint">
-            Debug — dernière saison :{' '}
-            {(frame ?? CYCLES_PER_SEASON) === 0 ? 'début' : `cycle ${frame ?? CYCLES_PER_SEASON}`}
-            {frame !== null && frame >= 1 && lastRun!.cycles[frame - 1] && (
-              <> · {lastRun!.cycles[frame - 1]!.events.length} changement(s)</>
-            )}
-          </p>
-          {frame !== null && frame >= 1 && (
-            <ul class="plain log">
-              {lastRun!.cycles[frame - 1]!.events.slice(0, 12).map((e, k) => (
-                <li key={k}>
-                  #{e.index} {e.from} → {e.to} <small>({e.lawId})</small>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {playbackDone && lastRun && (
-        <SeasonSummary summary={lastRun.summary} final={gameOver} onContinue={acknowledge} />
-      )}
-
-      {!pending && !viewing && gameOver && (
-        <EndScreen game={game} onNew={() => startNew(randomSeed())} onReplay={() => startNew(game.seed)} />
-      )}
-
-      {canPickDraft && (
-        <DraftPanel
-          offer={game.draft!}
-          grimoire={game.grimoire}
-          onTake={(id, at) => edit((g) => takeDraftLaw(g, id, at))}
-          onSkip={() => edit(skipDraft)}
-        />
-      )}
-
-      {game.phase === 'intervention' && !pending && !(canPickDraft) && (
-        <>
-          <Grimoire
-            laws={game.grimoire}
-            editable={canAct}
-            onMove={(i, d) => edit((g) => moveLaw(g, i, d))}
-            onRemove={(i) => edit((g) => removeLaw(g, i))}
+    <div class="layout">
+      <div class="map">
+        <div class="map-inner" style={{ '--ratio': VIEW_W / VIEW_H }}>
+          <Board
+            cells={cells}
+            targets={targets}
+            flashes={flashes}
+            flashKey={frame ?? 0}
+            preview={preview}
+            selected={inspected}
+            onTap={onTapCell}
           />
-          {canAct && (
-            <MiracleBar
-              essence={game.essence}
-              selected={miracle}
-              cast={game.miracles.length}
-              onSelect={setMiracle}
-              onUndo={() => edit(undoMiracle)}
-              onUndoAll={() => edit(undoAllMiracles)}
-            />
+          {inspected !== null && cells[inspected] && (
+            <Inspector index={inspected} cell={cells[inspected]!} onClose={() => setInspected(null)} />
           )}
-          <NaturalLaws />
-          {canAct && (
-            <div class="actions">
-              <button class={`btn ${previewOn ? 'active' : ''}`} onClick={() => setPreviewOn((p) => !p)}>
-                {previewOn ? 'Masquer l’aperçu' : 'Aperçu'}
+        </div>
+      </div>
+
+      <aside class="side">
+        <Header
+          season={shownSeason}
+          essence={shownEssence}
+          vegetal={countVegetal(cells)}
+          forests={countElement(cells, 'forest')}
+        />
+
+        {viewing && (
+          <div class="playback">
+            {pending && playing && (
+              <button class="btn small" onClick={skipPlayback}>
+                Passer ⏭
               </button>
-              <button class="btn primary" onClick={launch}>
-                Lancer la saison
+            )}
+            <span class="hint">
+              {frame === 0 ? 'Début de saison' : `Cycle ${frame}/${CYCLES_PER_SEASON}`}
+              {!pending && ' (historique)'}
+            </span>
+            {!pending && (
+              <button class="btn small ghost" onClick={() => setFrame(null)}>
+                Retour au présent
+              </button>
+            )}
+          </div>
+        )}
+
+        {showHistorySlider && (
+          <div class="panel debug">
+            <div class="row">
+              <button
+                class="icon"
+                aria-label="Cycle précédent"
+                disabled={(frame ?? CYCLES_PER_SEASON) <= 0}
+                onClick={() => {
+                  setPlaying(false);
+                  setFrame(Math.max(0, (frame ?? CYCLES_PER_SEASON) - 1));
+                }}
+              >
+                ◀
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={CYCLES_PER_SEASON}
+                value={frame ?? CYCLES_PER_SEASON}
+                aria-label="Historique de la dernière saison"
+                onInput={(e) => {
+                  setPlaying(false);
+                  setFrame(Number((e.currentTarget as HTMLInputElement).value));
+                }}
+              />
+              <button
+                class="icon"
+                aria-label="Cycle suivant"
+                disabled={(frame ?? CYCLES_PER_SEASON) >= CYCLES_PER_SEASON}
+                onClick={() => {
+                  setPlaying(false);
+                  setFrame(Math.min(CYCLES_PER_SEASON, (frame ?? CYCLES_PER_SEASON) + 1));
+                }}
+              >
+                ▶
               </button>
             </div>
-          )}
-        </>
+            <p class="hint">
+              Debug — dernière saison :{' '}
+              {(frame ?? CYCLES_PER_SEASON) === 0 ? 'début' : `cycle ${frame ?? CYCLES_PER_SEASON}`}
+              {frame !== null && frame >= 1 && lastRun!.cycles[frame - 1] && (
+                <> · {lastRun!.cycles[frame - 1]!.events.length} changement(s)</>
+              )}
+            </p>
+            {frame !== null && frame >= 1 && (
+              <ul class="plain log">
+                {lastRun!.cycles[frame - 1]!.events.slice(0, 12).map((e, k) => (
+                  <li key={k}>
+                    #{e.index} {e.from} → {e.to} <small>({e.lawId})</small>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {playbackDone && lastRun && <SeasonSummary summary={lastRun.summary} final={gameOver} onContinue={acknowledge} />}
+
+        {!pending && !viewing && gameOver && endDismissed && (
+          <section class="panel">
+            <h2>{game.phase === 'won' ? 'Victoire' : 'Défaite'}</h2>
+            <button class="btn small" onClick={() => setEndDismissed(false)}>
+              Revoir le bilan
+            </button>
+          </section>
+        )}
+
+        {game.phase === 'intervention' && !pending && (
+          <>
+            <Grimoire
+              laws={game.grimoire}
+              editable={canAct}
+              onMove={(i, d) => edit((g) => moveLaw(g, i, d))}
+              onRemove={(i) => edit((g) => removeLaw(g, i))}
+            />
+            <NaturalLaws />
+            {canAct && (
+              <MiracleBar
+                essence={game.essence}
+                selected={miracle}
+                cast={game.miracles.length}
+                onSelect={setMiracle}
+                onUndo={() => edit(undoMiracle)}
+                onUndoAll={() => edit(undoAllMiracles)}
+              />
+            )}
+            {canAct && (
+              <div class="actions">
+                <button class={`btn ${previewOn ? 'active' : ''}`} onClick={() => setPreviewOn((p) => !p)}>
+                  {previewOn ? 'Masquer l’aperçu' : 'Aperçu'}
+                </button>
+                <button class="btn primary" onClick={launch}>
+                  Lancer la saison
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        <footer class="footer">
+          <span>
+            Graine <code>{game.seed}</code>
+          </span>
+          <label class="switch">
+            <input type="checkbox" checked={debug} onChange={(e) => setDebug((e.currentTarget as HTMLInputElement).checked)} />
+            Debug
+          </label>
+          <button class="btn small ghost" onClick={() => confirmAbandon() && startNew(randomSeed())}>
+            Nouvelle partie
+          </button>
+          <button class="btn small ghost" onClick={() => confirmAbandon() && startNew(game.seed)}>
+            Rejouer la graine
+          </button>
+        </footer>
+      </aside>
+
+      {canPickDraft && (
+        <Overlay>
+          <DraftPanel
+            offer={game.draft!}
+            grimoire={game.grimoire}
+            onTake={(id, at) => edit((g) => takeDraftLaw(g, id, at))}
+            onSkip={() => edit(skipDraft)}
+          />
+        </Overlay>
       )}
 
-      {canPickDraft && <NaturalLaws />}
-
-      <footer class="footer">
-        <span>
-          Graine <code>{game.seed}</code>
-        </span>
-        <label class="switch">
-          <input type="checkbox" checked={debug} onChange={(e) => setDebug((e.currentTarget as HTMLInputElement).checked)} />
-          Debug
-        </label>
-        <button class="btn small ghost" onClick={() => confirmAbandon() && startNew(randomSeed())}>
-          Nouvelle partie
-        </button>
-        <button class="btn small ghost" onClick={() => confirmAbandon() && startNew(game.seed)}>
-          Rejouer la graine
-        </button>
-      </footer>
-
-      {inspected !== null && cells[inspected] && (
-        <Inspector index={inspected} cell={cells[inspected]!} onClose={() => setInspected(null)} />
+      {showEnd && !endDismissed && (
+        <Overlay>
+          <EndScreen
+            game={game}
+            onNew={() => startNew(randomSeed())}
+            onReplay={() => startNew(game.seed)}
+            onClose={() => setEndDismissed(true)}
+          />
+        </Overlay>
       )}
     </div>
   );
 }
-
