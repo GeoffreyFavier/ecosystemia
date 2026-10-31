@@ -63,3 +63,45 @@ Carte hexagonale 12×9, objectif 40 végétaux dont 14 Forêts, 2 lacs, 10–14 
 - L'Essence s'accumule encore en fin de partie (50+ pour le bot) : pas assez de puits d'Essence.
 - Les plantes n'apparaissent qu'au bord de l'eau (Germination), sauf via Cendre fertile et Lichen : l'expansion passe
   par la création d'eau (Source, Ruissellement, Pluie des cimes) ou par le feu.
+
+## Comparaison de variantes (`npm run sim -- --sweep`, 500 parties par variante et par politique, graines 1–500)
+
+Cible indicative : naive ≈ 10 %, greedy ≈ 45 %, victoires réparties entre les saisons 3 et 5.
+**Aucune variante n'est appliquée** : les valeurs par défaut sont inchangées (`src/data/variants.ts` ne sert qu'au simulateur).
+`S≤3/4/5` = part des victoires obtenues en saison ≤ 3 / 4 / 5.
+
+| Var | Description | naive | naive S≤3/4/5 | greedy | greedy S≤3/4/5 | Forêts finales (greedy) | Plantes jamais Forêt (greedy) |
+|-----|-------------|-------|---------------|--------|----------------|-------------------------|-------------------------------|
+| A | Réglages actuels (référence) | 5,4 % | 4/22/74 | 23,8 % | 0/7/93 | 11,2 | 26,9 |
+| B | GOAL.forests = 12 | 5,6 % | 4/21/75 | 26,6 % | 0/7/93 | 11,2 | 26,9 |
+| C | Essence de départ = 15 | 5,8 % | 7/66/28 | 60,8 % | 0/12/88 | 16,8 | 28,0 |
+| D | Croissance ≥ 2 voisins et Plante d'âge ≥ 2 | 7,2 % | 6/78/17 | 99,6 % | 1/41/58 | 46,5 | 5,4 |
+| E | B + C | 6,0 % | 7/63/30 | 69,6 % | 0/11/89 | 16,6 | 28,1 |
+| F* | Essence de départ = 12 | 5,6 % | 4/46/50 | 39,0 % | 0/8/92 | 13,6 | 27,5 |
+| G* | B + Essence de départ = 12 | 5,8 % | 7/41/52 | 45,0 % | 0/8/92 | 13,4 | 27,5 |
+| H* | Croissance ≥ 2 voisins et Plante d'âge ≥ 4 | 6,8 % | 3/79/18 | 99,6 % | 1/42/57 | 46,5 | 5,6 |
+| I* | D + objectif 40 végétaux dont 24 Forêts | 7,0 % | 3/80/17 | 99,6 % | 1/41/58 | 46,5 | 5,4 |
+| J* | D + objectif 50 végétaux dont 30 Forêts | 1,4 % | 0/71/29 | 90,0 % | 0/15/85 | 51,8 | 5,9 |
+| K* | D + objectif 55 végétaux dont 35 Forêts | 0,8 % | 0/100/0 | 73,0 % | 0/10/90 | 52,4 | 5,9 |
+
+\* Variantes ajoutées en plus de la demande (A–E) pour encadrer la cible.
+
+### Lecture
+- **Le goulot est la Croissance, pas l'objectif.** Avec les réglages actuels, ~27 Plantes par partie ne deviennent jamais
+  Forêt (le feu n'y est pour rien : 0 végétal brûlé avec ces bots) et ~27 Graines se flétrissent. D (Croissance ≥ 2 voisins)
+  supprime le goulot (5 Plantes bloquées) mais rend le jeu trivial pour greedy (99,6 %) ; durcir l'objectif (I–K) ne
+  recrée pas de tension tant que la carte permet ~46-52 végétaux.
+- **L'âge minimum de la Plante (2 ou 4) ne change rien** (D ≈ H) : le seuil de voisins est le seul levier de Croissance.
+- **B (14 → 12 Forêts) pèse peu** (+2,8 points pour greedy) : il manque autant de végétaux que de Forêts.
+- **L'Essence de départ est le levier le plus progressif** : 10 → 23,8 %, 12 → 39,0 %, 15 → 60,8 % pour greedy.
+- **naive reste à 5-7 % quelle que soit la variante** : elle prend la première loi proposée et ne crée jamais d'eau, donc
+  elle mesure surtout un plancher ; elle ne peut pas atteindre « ≈ 10 % » avec ces leviers.
+- **Les victoires de greedy tombent à ~90 % en saison 5** pour toutes les variantes « Essence » : aucune ne répartit les
+  victoires sur 3-5. Seule la famille D les déplace vers la saison 4 (41 %), au prix d'un jeu trop facile.
+
+### Recommandation (non appliquée)
+**G : GOAL.forests = 12 et Essence de départ = 12.** C'est la seule variante qui tombe sur la cible greedy (45,0 %), elle
+garde la structure actuelle du jeu et ne touche que deux chiffres de `src/data/constants.ts`. Limites connues : naive
+reste à ~6 % et 92 % des victoires de greedy arrivent en saison 5. Si l'on veut des victoires plus précoces, la piste à
+tester ensuite est une Croissance **intermédiaire** entre ≥ 3 et ≥ 2 voisins (par exemple ≥ 2 voisins seulement si la
+Plante touche aussi de l'eau, ou un seuil de 3 avec les Forêts comptant double), puis re-régler l'Essence.

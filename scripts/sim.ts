@@ -1,11 +1,14 @@
 // Balance simulator: plays full games without UI.
 // Usage:
-//   npm run sim -- --runs 500 [--policy naive|greedy] [--seed 1] [--sweep]
+//   npm run sim -- --runs 500 [--policy naive|greedy] [--seed 1] [--sweep [--variants A,B,C]]
 // --sweep compares the balance variants of src/data/variants.ts with both policies.
 
 import { GOAL, START } from '../src/data/constants.ts';
 import { LAW_BY_ID } from '../src/data/laws.ts';
 import { MIRACLES } from '../src/data/miracles.ts';
+import { VARIANTS } from '../src/data/variants.ts';
+import type { BalanceVariant } from '../src/data/variants.ts';
+import type { Law } from '../src/engine/types.ts';
 import { greedyPolicy, naivePolicy } from '../src/engine/policies.ts';
 import type { Policy } from '../src/engine/policies.ts';
 import { playGameDetailed } from '../src/engine/telemetry.ts';
@@ -80,4 +83,69 @@ if (!flag('sweep')) {
   const policy = policies[policyName];
   if (!policy) throw new Error(`Unknown policy "${policyName}" (naive | greedy)`);
   report(policyName, playAll(policy));
+}
+
+// ---------------------------------------------------------------- sweep
+
+/** Run `fn` with a variant's overrides applied to the (mutable) data, then restore the defaults. */
+function withVariant<T>(v: BalanceVariant, fn: () => T): T {
+  const croissance = LAW_BY_ID['croissance'] as Extract<Law, { kind: 'transform' }>;
+  const saved = { vegetal: GOAL.vegetal, forests: GOAL.forests, essence: START.essence, conditions: croissance.rule.conditions };
+  try {
+    if (v.goalVegetal !== undefined) GOAL.vegetal = v.goalVegetal;
+    if (v.goalForests !== undefined) GOAL.forests = v.goalForests;
+    if (v.startEssence !== undefined) START.essence = v.startEssence;
+    if (v.croissance) {
+      croissance.rule.conditions = [
+        { type: 'neighbors', element: 'vegetal', min: v.croissance.minNeighbors },
+        { type: 'minAge', value: v.croissance.minAge },
+      ];
+    }
+    return fn();
+  } finally {
+    GOAL.vegetal = saved.vegetal;
+    GOAL.forests = saved.forests;
+    START.essence = saved.essence;
+    croissance.rule.conditions = saved.conditions;
+  }
+}
+
+if (flag('sweep')) {
+  interface Cell {
+    win: number;
+    s3: number;
+    s4: number;
+    s5: number;
+    forests: number;
+    stagnant: number;
+  }
+  const summarize = (games: GameReport[]): Cell => {
+    const wins = games.filter((g) => g.won);
+    const share = (pred: (g: GameReport) => boolean) => (wins.length ? (100 * wins.filter(pred).length) / wins.length : 0);
+    return {
+      win: (100 * wins.length) / games.length,
+      s3: share((g) => g.endSeason <= 3),
+      s4: share((g) => g.endSeason === 4),
+      s5: share((g) => g.endSeason === 5),
+      forests: mean(games.map((g) => g.finalForests)),
+      stagnant: mean(games.map((g) => g.plantsNeverForest)),
+    };
+  };
+  console.log(`Sweep — ${runs} games per variant and policy (seeds ${firstSeed}…${firstSeed + runs - 1})`);
+  console.log('Target: naive ≈ 10 %, greedy ≈ 45 %, wins spread over seasons 3-5.\n');
+  const wanted = arg('variants', '').split(',').filter(Boolean);
+  const chosen = wanted.length ? VARIANTS.filter((v) => wanted.includes(v.id)) : VARIANTS;
+  const rows = chosen.map((v) => ({
+    v,
+    naive: summarize(withVariant(v, () => playAll(naivePolicy))),
+    greedy: summarize(withVariant(v, () => playAll(greedyPolicy))),
+  }));
+  const seasons = (c: Cell) => `${c.s3.toFixed(0)}/${c.s4.toFixed(0)}/${c.s5.toFixed(0)}`;
+  console.log('| Var | Description | naive win | naive S≤3/4/5 (% of wins) | greedy win | greedy S≤3/4/5 (% of wins) | greedy forests | greedy plants never Forest |');
+  console.log('|-----|-------------|-----------|----------------------------|------------|-----------------------------|----------------|----------------------------|');
+  for (const { v, naive, greedy } of rows) {
+    console.log(
+      `| ${v.id} | ${v.label} | ${naive.win.toFixed(1)} % | ${seasons(naive)} | ${greedy.win.toFixed(1)} % | ${seasons(greedy)} | ${f1(greedy.forests)} | ${f1(greedy.stagnant)} |`,
+    );
+  }
 }
