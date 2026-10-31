@@ -32,15 +32,15 @@ Le moteur est donc pur, déterministe et jouable par un programme.
 
 1. Altitude : bruit aléatoire lissé par 1 ou 2 passes de moyenne, puis découpé en quantiles
    pour que les 3 niveaux soient toujours présents.
-2. Un lac connexe (orthogonalement) de 4 à 6 cases d'Eau en altitude basse.
-3. 4 Graines, dont au moins 2 voisines d'une Eau.
-4. 6 à 8 Roches, de préférence en altitude haute.
+2. **2 lacs** connexes de 4 à 7 cases d'Eau chacun, en altitude basse (ils ne se touchent pas).
+3. **6 Graines**, dont au moins **3** voisines d'une Eau.
+4. **10 à 14 Roches**, de préférence en altitude haute.
 5. Le reste en Vide.
 
 ## 3. Structure d'une partie
 
 - **5 saisons maximum**, **8 cycles par saison**.
-- **Objectif** vérifié à la fin de chaque saison : au moins **24 végétaux** dont au moins **8 Forêts**.
+- **Objectif** vérifié à la fin de chaque saison : au moins **40 végétaux** dont au moins **14 Forêts**.
   Atteint → **victoire immédiate**.
 - **Défaite** :
   - objectif non atteint à la fin de la saison 5 ;
@@ -111,7 +111,7 @@ plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge 
 | Ruissellement | transfo | commune | Vide avec un voisin Eau d'altitude strictement supérieure → Eau |
 | Érosion | transfo | peu commune | Roche avec ≥ 3 Eau voisines → Vide |
 | Lichen | transfo | rare | Roche d'âge ≥ 6 avec ≥ 1 Forêt voisine → Plante |
-| Mangrove | transfo | rare | Eau avec ≥ 4 Forêts voisines → Forêt |
+| Mangrove | transfo | rare | Eau avec ≥ 3 Forêts voisines → Forêt |
 | Racines humides | protection | commune | Végétal avec ≥ 1 Eau voisine ne change pas |
 | Pluie des cimes | event /4 | peu commune | Chaque Vide d'altitude 2 → Eau |
 | Foudre | event /5 | rare | La Forêt la plus haute devient Feu (égalité : première ligne par ligne ; aucune Forêt : rien) |
@@ -121,7 +121,7 @@ plus une échappatoire `custom` (registre de fonctions) non utilisée à l'Âge 
 
 ## 7. Interface (mobile portrait, ~380 px)
 
-- En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/24, forêts b/8) avec barres.
+- En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/40, forêts b/14) avec barres.
 - Carte hexagonale rendue en **SVG** (un polygone par case, emoji en `<text>`, tap sur le polygone) : fond = altitude
   (3 teintes de terre), emoji d'élément avec fond coloré léger.
 - Sous la grille : grimoire (↑ ↓ ✕), lois naturelles (repliables), barre des miracles, Aperçu / Lancer la saison.

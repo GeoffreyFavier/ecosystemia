@@ -120,12 +120,12 @@ export const POOL_LAW_DEFS: readonly Law[] = [
   {
     id: 'mangrove',
     name: 'Mangrove',
-    description: 'Eau avec ≥ 4 Forêts voisines → Forêt.',
+    description: 'Eau avec ≥ 3 Forêts voisines → Forêt.',
     kind: 'transform',
     rarity: 'rare',
     rule: {
       target: 'water',
-      conditions: [{ type: 'neighbors', element: 'forest', min: 4 }],
+      conditions: [{ type: 'neighbors', element: 'forest', min: 3 }],
       result: 'forest',
     },
   },

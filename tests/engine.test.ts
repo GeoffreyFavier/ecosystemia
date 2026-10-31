@@ -179,6 +179,45 @@ describe('cycle rules', () => {
   });
 });
 
+describe('law thresholds (6 neighbors)', () => {
+  // [law, center element, neighbor element, threshold, result]
+  const cases: [string, string, string, number, string][] = [
+    ['croissance', 'p', 'p', 3, 'forest'],
+    ['dissemination', '.', 'F', 2, 'seed'],
+    ['pollen', '.', 'p', 3, 'seed'],
+    ['erosion', 'R', 'W', 3, 'void'],
+    ['mangrove', 'W', 'F', 3, 'forest'],
+  ];
+  const C: [number, number] = [5, 4];
+  for (const [law, center, neighbor, threshold, result] of cases) {
+    it(`${law}: needs ${threshold} neighbors`, () => {
+      const build = (n: number) => {
+        const s = makeState([], { grimoire: [law] });
+        put(s, ...C, center);
+        DIRS.slice(0, n).forEach((d) => put(s, ...nb(...C, d), neighbor));
+        return s;
+      };
+      expect(el(step(build(threshold - 1)), ...C)).not.toBe(result);
+      expect(el(step(build(threshold)), ...C)).toBe(result);
+    });
+  }
+  it('Vent d’ouest looks at the O neighbor only', () => {
+    const west = makeState([], { grimoire: ['vent-ouest'] });
+    put(west, ...nb(...C, 'O'), 'p');
+    const east = makeState([], { grimoire: ['vent-ouest'] });
+    put(east, ...nb(...C, 'E'), 'p');
+    expect(el(step(west), ...C)).toBe('seed');
+    expect(el(step(east), ...C)).toBe('void');
+  });
+  it('Racines humides needs one water neighbor', () => {
+    const s = makeState([], { grimoire: ['racines-humides'] });
+    put(s, ...C, 'p');
+    put(s, ...nb(...C, 'SE'), 'W');
+    put(s, ...nb(...C, 'NO'), '*');
+    expect(el(step(s), ...C)).toBe('plant');
+  });
+});
+
 describe('Foudre', () => {
   it('hits the highest forest', () => {
     const s = makeState(['F', '....F'], { grimoire: ['foudre'], cycle: 4, alts: ['1', '00002'] });
