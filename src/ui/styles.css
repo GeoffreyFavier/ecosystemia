@@ -127,131 +127,115 @@ small,
   background: var(--good);
 }
 
-/* ---- Board */
+/* ---- Board (SVG hex map) */
 .board {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 2px;
+  display: block;
+  width: 100%;
+  height: auto;
   background: #000;
   border: 2px solid var(--panel-border);
   border-radius: var(--radius);
-  padding: 2px;
-  width: 100%;
-  aspect-ratio: 1;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.cell {
-  position: relative;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(16px, 6.4vw, 28px);
-  line-height: 1;
+.hex {
+  fill: var(--alt-1);
+  stroke: none;
   cursor: pointer;
-  overflow: hidden;
-  background: var(--alt-1);
 }
-.cell.alt-0 {
-  background-color: var(--alt-0);
+.hex.alt-0 {
+  fill: var(--alt-0);
 }
-.cell.alt-1 {
-  background-color: var(--alt-1);
+.hex.alt-1 {
+  fill: var(--alt-1);
 }
-.cell.alt-2 {
-  background-color: var(--alt-2);
+.hex.alt-2 {
+  fill: var(--alt-2);
 }
-/* Light element tint over the altitude colour. */
-.cell.el-water {
-  background-image: linear-gradient(#2f6fd066, #2f6fd066);
-}
-.cell.el-rock {
-  background-image: linear-gradient(#8a8a9a55, #8a8a9a55);
-}
-.cell.el-seed {
-  background-image: linear-gradient(#b08a4c55, #b08a4c55);
-}
-.cell.el-plant {
-  background-image: linear-gradient(#4fc26a55, #4fc26a55);
-}
-.cell.el-forest {
-  background-image: linear-gradient(#1f8a4a99, #1f8a4a99);
-}
-.cell.el-fire {
-  background-image: linear-gradient(#ff6a2a88, #ff6a2a88);
-}
-.cell.el-ash {
-  background-image: linear-gradient(#9a9aa8cc, #9a9aa8cc);
-}
-.alt-mark {
-  position: absolute;
-  right: 3px;
-  bottom: 0;
-  font-size: 10px;
-  letter-spacing: -1px;
-  color: #fff;
-  opacity: 0.55;
+/* Element tint over the altitude colour (never takes taps). */
+.hex-tint,
+.hex-flash,
+.emoji,
+.alt-mark,
+.badge {
   pointer-events: none;
 }
-.cell.target {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-  animation: pulse 1.1s ease-in-out infinite;
+.hex-tint {
+  fill: transparent;
 }
-.cell.selected {
-  outline: 2px solid #fff;
-  outline-offset: -2px;
+.hex-tint.el-water {
+  fill: #2f6fd0;
+  fill-opacity: 0.45;
 }
-.cell.preview {
-  outline: 2px dashed #fff;
-  outline-offset: -3px;
+.hex-tint.el-rock {
+  fill: #8a8a9a;
+  fill-opacity: 0.33;
+}
+.hex-tint.el-seed {
+  fill: #b08a4c;
+  fill-opacity: 0.33;
+}
+.hex-tint.el-plant {
+  fill: #4fc26a;
+  fill-opacity: 0.35;
+}
+.hex-tint.el-forest {
+  fill: #1f8a4a;
+  fill-opacity: 0.6;
+}
+.hex-tint.el-fire {
+  fill: #ff6a2a;
+  fill-opacity: 0.53;
+}
+.hex-tint.el-ash {
+  fill: #9a9aa8;
+  fill-opacity: 0.8;
+}
+.alt-mark {
+  fill: #fff;
+  opacity: 0.55;
 }
 .badge {
-  position: absolute;
-  left: 1px;
-  top: 1px;
-  font-size: 11px;
-  border-radius: 6px;
-  min-width: 15px;
-  height: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #000a;
+  fill: #fff;
+  paint-order: stroke;
+  stroke: #000;
+  stroke-width: 2px;
 }
-.badge.el-void,
-.badge.el-ash {
-  color: #ccc;
+.hex.target {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  animation: pulse 1.1s ease-in-out infinite;
 }
-.cell.flash {
+.hex.selected {
+  stroke: #fff;
+  stroke-width: 2.5;
+}
+.hex.preview {
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.hex-flash {
+  fill: #fff;
+  fill-opacity: 0;
   animation: flash-a 0.4s ease-out;
 }
-.cell.flash.flash-1 {
+.hex-flash.flash-1 {
   animation-name: flash-b;
 }
 @keyframes flash-a {
-  0%,
-  100% {
-    filter: none;
-  }
   35% {
-    filter: brightness(2.2) saturate(1.5);
+    fill-opacity: 0.75;
   }
 }
 @keyframes flash-b {
-  0%,
-  100% {
-    filter: none;
-  }
   35% {
-    filter: brightness(2.2) saturate(1.5);
+    fill-opacity: 0.75;
   }
 }
 @keyframes pulse {
   50% {
-    outline-color: #fff6;
+    stroke-opacity: 0.35;
   }
 }
 
@@ -575,8 +559,8 @@ code {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cell.target,
-  .cell.flash {
+  .hex.target,
+  .hex-flash {
     animation: none;
   }
 }

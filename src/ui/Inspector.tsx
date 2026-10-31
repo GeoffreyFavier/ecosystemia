@@ -1,6 +1,6 @@
 import { ELEMENTS } from '../data/elements.ts';
 import type { Cell } from '../engine/index.ts';
-import { toXY } from '../engine/index.ts';
+import { toOffset } from '../engine/index.ts';
 import { lawName } from './names.ts';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function Inspector({ index, cell, onClose }: Props) {
-  const { x, y } = toXY(index);
+  const { col, row } = toOffset(index);
   const ago = cell.age === 0 ? 'au dernier cycle' : `il y a ${cell.age} cycle${cell.age > 1 ? 's' : ''}`;
   return (
     <div class="sheet" role="dialog" aria-label="Inspecteur">
@@ -19,7 +19,7 @@ export function Inspector({ index, cell, onClose }: Props) {
           {ELEMENTS[cell.element].emoji} {ELEMENTS[cell.element].name}
         </strong>
         <span class="hint">
-          case {x + 1},{y + 1}
+          case {col + 1},{row + 1}
         </span>
         <button class="icon" onClick={onClose} aria-label="Fermer">
           ✕

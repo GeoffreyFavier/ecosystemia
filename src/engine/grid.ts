@@ -1,46 +1,68 @@
-import { GRID_SIZE } from '../data/constants.ts';
-import type { Dir, Hood } from './types.ts';
+// Hex grid, pointy-top. Stored as "odd-r" offset coordinates (col,row), row-major; neighbor and
+// distance maths use axial coordinates (q,r). See https://www.redblobgames.com/grids/hexagons/
 
-export const CELL_COUNT = GRID_SIZE * GRID_SIZE;
+import { GRID_COLS, GRID_ROWS } from '../data/constants.ts';
+import type { Dir } from './types.ts';
 
-export const toIndex = (x: number, y: number): number => y * GRID_SIZE + x;
-export const toXY = (index: number): { x: number; y: number } => ({
-  x: index % GRID_SIZE,
-  y: Math.floor(index / GRID_SIZE),
+export const CELL_COUNT = GRID_COLS * GRID_ROWS;
+
+export interface Axial {
+  q: number;
+  r: number;
+}
+
+export const toIndex = (col: number, row: number): number => row * GRID_COLS + col;
+export const toOffset = (index: number): { col: number; row: number } => ({
+  col: index % GRID_COLS,
+  row: Math.floor(index / GRID_COLS),
 });
 
-const DIR_DELTAS: Record<Dir, [number, number]> = {
-  N: [0, -1],
-  S: [0, 1],
+/** odd-r offset → axial. */
+export const offsetToAxial = (col: number, row: number): Axial => ({ q: col - (row - (row & 1)) / 2, r: row });
+/** axial → odd-r offset. */
+export const axialToOffset = (q: number, r: number): { col: number; row: number } => ({
+  col: q + (r - (r & 1)) / 2,
+  row: r,
+});
+
+const inBounds = (col: number, row: number): boolean => col >= 0 && col < GRID_COLS && row >= 0 && row < GRID_ROWS;
+
+/** Axial deltas (dq, dr) for each direction. */
+const AXIAL_DELTAS: Record<Dir, [number, number]> = {
   E: [1, 0],
-  W: [-1, 0],
+  O: [-1, 0],
   NE: [1, -1],
-  NW: [-1, -1],
-  SE: [1, 1],
-  SW: [-1, 1],
+  NO: [0, -1],
+  SE: [0, 1],
+  SO: [-1, 1],
 };
+export const DIRS = Object.keys(AXIAL_DELTAS) as Dir[];
 
-const ORTHO: Dir[] = ['N', 'E', 'S', 'W'];
-const MOORE: Dir[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-
-/** Index of the neighbor in a direction, or -1 if off-grid. */
+/** Index of the neighbor in a direction, or -1 if off the map. */
 export function neighborInDir(index: number, dir: Dir): number {
-  const { x, y } = toXY(index);
-  const [dx, dy] = DIR_DELTAS[dir];
-  const nx = x + dx;
-  const ny = y + dy;
-  if (nx < 0 || ny < 0 || nx >= GRID_SIZE || ny >= GRID_SIZE) return -1;
-  return toIndex(nx, ny);
+  const { col, row } = toOffset(index);
+  const a = offsetToAxial(col, row);
+  const [dq, dr] = AXIAL_DELTAS[dir];
+  const n = axialToOffset(a.q + dq, a.r + dr);
+  return inBounds(n.col, n.row) ? toIndex(n.col, n.row) : -1;
 }
 
-function buildTable(dirs: Dir[]): number[][] {
-  return Array.from({ length: CELL_COUNT }, (_, i) =>
-    dirs.map((d) => neighborInDir(i, d)).filter((n) => n >= 0),
-  );
+const NEIGHBORS: number[][] = Array.from({ length: CELL_COUNT }, (_, i) =>
+  DIRS.map((d) => neighborInDir(i, d)).filter((n) => n >= 0),
+);
+
+/** The (up to 6) neighbors of a cell. */
+export function neighborsOf(index: number): readonly number[] {
+  return NEIGHBORS[index]!;
 }
 
-const TABLES: Record<Hood, number[][]> = { ortho: buildTable(ORTHO), moore: buildTable(MOORE) };
-
-export function neighborsOf(index: number, hood: Hood): readonly number[] {
-  return TABLES[hood][index]!;
+/** Hex distance between two cells (number of steps). */
+export function hexDistance(a: number, b: number): number {
+  const pa = toOffset(a);
+  const pb = toOffset(b);
+  const A = offsetToAxial(pa.col, pa.row);
+  const B = offsetToAxial(pb.col, pb.row);
+  const dq = A.q - B.q;
+  const dr = A.r - B.r;
+  return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
 }

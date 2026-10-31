@@ -10,7 +10,7 @@ function smoothedNoise(rng: Rng): number[] {
   const passes = rng.int(GENERATION.smoothingPassesMin, GENERATION.smoothingPassesMax);
   for (let p = 0; p < passes; p++) {
     noise = noise.map((v, i) => {
-      const ns = neighborsOf(i, 'moore');
+      const ns = neighborsOf(i);
       return (v + ns.reduce((sum, n) => sum + noise[n]!, 0)) / (ns.length + 1);
     });
   }
@@ -29,12 +29,12 @@ function toAltitudes(noise: number[]): Altitude[] {
   return alt;
 }
 
-/** Grow a random orthogonally-connected blob of `size` cells; `allowed` restricts candidates. */
+/** Grow a random connected blob of `size` cells from `start`; `allowed` restricts candidates. */
 function growBlob(rng: Rng, start: number, size: number, allowed: (i: number) => boolean): number[] | null {
   const blob = [start];
   while (blob.length < size) {
     const frontier = new Set<number>();
-    for (const b of blob) for (const n of neighborsOf(b, 'ortho')) if (!blob.includes(n) && allowed(n)) frontier.add(n);
+    for (const b of blob) for (const n of neighborsOf(b)) if (!blob.includes(n) && allowed(n)) frontier.add(n);
     if (frontier.size === 0) return null;
     blob.push(rng.pick([...frontier].sort((a, b) => a - b)));
   }
@@ -44,29 +44,40 @@ function growBlob(rng: Rng, start: number, size: number, allowed: (i: number) =>
 export function generateGrid(rng: Rng): Cell[] {
   const altitude = toAltitudes(smoothedNoise(rng));
   const grid: Cell[] = altitude.map((a) => ({ element: 'void', altitude: a, age: 0, lastLawId: null }));
+  const all = grid.map((_, i) => i);
 
-  // Lake: connected, low altitude.
-  const lakeSize = rng.int(GENERATION.lakeMin, GENERATION.lakeMax);
-  const lows = rng.shuffle(grid.map((_, i) => i).filter((i) => altitude[i] === 0));
-  let lake: number[] | null = null;
-  for (const start of lows) {
-    lake = growBlob(rng, start, lakeSize, (i) => altitude[i] === 0);
-    if (lake) break;
+  // Lakes: connected, low altitude, never touching each other (or they would merge into one).
+  for (let k = 0; k < GENERATION.lakes; k++) {
+    const size = rng.int(GENERATION.lakeMin, GENERATION.lakeMax);
+    const taken = new Set<number>();
+    for (const i of all) {
+      if (grid[i]!.element !== 'water') continue;
+      taken.add(i);
+      for (const n of neighborsOf(i)) taken.add(n);
+    }
+    const free = (i: number) => !taken.has(i);
+    let lake: number[] | null = null;
+    for (const start of rng.shuffle(all.filter((i) => free(i) && altitude[i] === 0))) {
+      lake = growBlob(rng, start, size, (i) => free(i) && altitude[i] === 0);
+      if (lake) break;
+    }
+    if (!lake) {
+      // Fallback (rare): carve the lake out of any free terrain.
+      for (const start of rng.shuffle(all.filter(free))) {
+        lake = growBlob(rng, start, size, free);
+        if (lake) break;
+      }
+      for (const i of lake!) grid[i]!.altitude = 0;
+    }
+    for (const i of lake!) grid[i]!.element = 'water';
   }
-  if (!lake) {
-    // Fallback (rare): carve the lake out of any terrain.
-    lake = growBlob(rng, rng.int(0, CELL_COUNT - 1), lakeSize, () => true)!;
-    for (const i of lake) grid[i]!.altitude = 0;
-  }
-  for (const i of lake) grid[i]!.element = 'water';
 
-  // Seeds: some next to the water, the others anywhere on bare ground.
-  const bare = () => grid.map((_, i) => i).filter((i) => grid[i]!.element === 'void');
-  const nearWater = (i: number) => neighborsOf(i, 'moore').some((n) => grid[n]!.element === 'water');
+  // Seeds: some next to water, the others anywhere on bare ground.
+  const bare = () => all.filter((i) => grid[i]!.element === 'void');
+  const nearWater = (i: number) => neighborsOf(i).some((n) => grid[n]!.element === 'water');
   const wet = rng.shuffle(bare().filter(nearWater)).slice(0, GENERATION.seedsNearWater);
   for (const i of wet) grid[i]!.element = 'seed';
-  const others = rng.shuffle(bare()).slice(0, GENERATION.seeds - wet.length);
-  for (const i of others) grid[i]!.element = 'seed';
+  for (const i of rng.shuffle(bare()).slice(0, GENERATION.seeds - wet.length)) grid[i]!.element = 'seed';
 
   // Rocks: highest ground first.
   const rockCount = rng.int(GENERATION.rocksMin, GENERATION.rocksMax);
@@ -76,4 +87,3 @@ export function generateGrid(rng: Rng): Cell[] {
 
   return grid;
 }
-

@@ -10,7 +10,7 @@ export const START_LAW_DEFS: readonly Law[] = [
     rarity: 'common',
     rule: {
       target: 'seed',
-      conditions: [{ type: 'neighbors', element: 'water', hood: 'moore', min: 1 }],
+      conditions: [{ type: 'neighbors', element: 'water', min: 1 }],
       result: 'plant',
     },
   },
@@ -22,7 +22,7 @@ export const START_LAW_DEFS: readonly Law[] = [
     rarity: 'common',
     rule: {
       target: 'plant',
-      conditions: [{ type: 'neighbors', element: 'vegetal', hood: 'moore', min: 3 }],
+      conditions: [{ type: 'neighbors', element: 'vegetal', min: 3 }],
       result: 'forest',
     },
   },
@@ -38,7 +38,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'common',
     rule: {
       target: ['void', 'ash'],
-      conditions: [{ type: 'neighbors', element: 'forest', hood: 'moore', min: 2 }],
+      conditions: [{ type: 'neighbors', element: 'forest', min: 2 }],
       result: 'seed',
     },
   },
@@ -50,7 +50,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'common',
     rule: {
       target: 'void',
-      conditions: [{ type: 'neighbors', element: 'plant', hood: 'moore', min: 3 }],
+      conditions: [{ type: 'neighbors', element: 'plant', min: 3 }],
       result: 'seed',
     },
   },
@@ -62,7 +62,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'uncommon',
     rule: {
       target: 'void',
-      conditions: [{ type: 'direction', dir: 'W', element: 'vegetal' }],
+      conditions: [{ type: 'direction', dir: 'O', element: 'vegetal' }],
       result: 'seed',
     },
   },
@@ -74,7 +74,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'common',
     rule: {
       target: 'ash',
-      conditions: [{ type: 'neighbors', element: 'vegetal', hood: 'moore', min: 1 }],
+      conditions: [{ type: 'neighbors', element: 'vegetal', min: 1 }],
       result: 'plant',
     },
   },
@@ -86,7 +86,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'common',
     rule: {
       target: 'void',
-      conditions: [{ type: 'neighbors', element: 'water', hood: 'ortho', min: 1, relativeAltitude: 'higher' }],
+      conditions: [{ type: 'neighbors', element: 'water', min: 1, relativeAltitude: 'higher' }],
       result: 'water',
     },
   },
@@ -98,7 +98,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'uncommon',
     rule: {
       target: 'rock',
-      conditions: [{ type: 'neighbors', element: 'water', hood: 'moore', min: 3 }],
+      conditions: [{ type: 'neighbors', element: 'water', min: 3 }],
       result: 'void',
     },
   },
@@ -112,7 +112,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
       target: 'rock',
       conditions: [
         { type: 'minAge', value: 6 },
-        { type: 'neighbors', element: 'forest', hood: 'moore', min: 1 },
+        { type: 'neighbors', element: 'forest', min: 1 },
       ],
       result: 'plant',
     },
@@ -125,7 +125,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'rare',
     rule: {
       target: 'water',
-      conditions: [{ type: 'neighbors', element: 'forest', hood: 'moore', min: 4 }],
+      conditions: [{ type: 'neighbors', element: 'forest', min: 4 }],
       result: 'forest',
     },
   },
@@ -137,7 +137,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     rarity: 'common',
     rule: {
       target: 'vegetal',
-      conditions: [{ type: 'neighbors', element: 'water', hood: 'ortho', min: 1 }],
+      conditions: [{ type: 'neighbors', element: 'water', min: 1 }],
     },
   },
   {
@@ -188,7 +188,7 @@ export const POOL_LAW_DEFS: readonly Law[] = [
     trigger: {
       type: 'seasonEnd',
       target: 'water',
-      conditions: [{ type: 'neighbors', element: 'forest', hood: 'moore', min: 1 }],
+      conditions: [{ type: 'neighbors', element: 'forest', min: 1 }],
       amount: 1,
     },
   },

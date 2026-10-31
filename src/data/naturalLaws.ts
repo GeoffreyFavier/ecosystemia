@@ -19,7 +19,7 @@ export const NATURAL_CATASTROPHES: readonly NaturalLaw[] = [
     category: 'catastrophe',
     rule: {
       target: 'vegetal',
-      conditions: [{ type: 'neighbors', element: 'fire', hood: 'ortho', min: 1 }],
+      conditions: [{ type: 'neighbors', element: 'fire', min: 1 }],
       result: 'fire',
     },
   },

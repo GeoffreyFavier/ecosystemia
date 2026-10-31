@@ -12,6 +12,7 @@ No other dependency without asking the user first.
 ## Structure
 - `src/engine/` — PURE deterministic simulation. No DOM, no Preact. Seeded RNG (mulberry32) stored in the state.
   State is plain JSON (serialisable). Functions are immutable-style: they return a new state.
+- Map: 12×9 hex grid, pointy-top, odd-r offset storage, axial maths (`src/engine/grid.ts`). 6 equivalent neighbors; directions E, O, NE, NO, SE, SO.
 - `src/data/` — elements, laws, miracles, balance constants. **Every gameplay number lives here.**
 - `src/ui/` — Preact components. They read the state and call the engine; they hold no rules.
 - `scripts/sim.ts` — balance simulator (no UI).

@@ -6,8 +6,8 @@ export type Altitude = 0 | 1 | 2;
 /** An element, a list of elements, or the pseudo-selectors 'vegetal' (plant|forest) and 'any'. */
 export type ElementSel = ElementId | 'vegetal' | 'any' | ElementId[];
 
-export type Hood = 'ortho' | 'moore';
-export type Dir = 'N' | 'S' | 'E' | 'W' | 'NE' | 'NW' | 'SE' | 'SW';
+/** The 6 hex directions: E, O (ouest), NE, NO, SE, SO. All 6 neighbors are equivalent. */
+export type Dir = 'E' | 'O' | 'NE' | 'NO' | 'SE' | 'SO';
 
 // ---------- Conditions (all evaluated against the snapshot, from the point of view of one cell)
 
@@ -15,7 +15,6 @@ export type Condition =
   | {
       type: 'neighbors';
       element: ElementSel;
-      hood: Hood;
       min?: number;
       max?: number;
       /** Only count neighbors strictly higher / lower / at the same altitude as the cell. */

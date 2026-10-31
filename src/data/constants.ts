@@ -1,6 +1,8 @@
 // Balance constants. EVERY gameplay number lives in src/data/.
 
-export const GRID_SIZE = 8;
+/** Hex map, odd-r offset storage (pointy-top), row-major. */
+export const GRID_COLS = 12;
+export const GRID_ROWS = 9;
 export const MAX_SEASONS = 5;
 export const CYCLES_PER_SEASON = 8;
 export const START_ESSENCE = 10;
@@ -21,6 +23,7 @@ export const GENERATION = {
   smoothingPassesMax: 2,
   /** Share of cells per altitude level, from lowest to highest (must sum to 1). */
   altitudeShares: [0.3, 0.4, 0.3],
+  lakes: 1,
   lakeMin: 4,
   lakeMax: 6,
   rocksMin: 6,

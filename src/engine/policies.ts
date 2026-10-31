@@ -12,7 +12,7 @@ import type { GameState } from './types.ts';
 export type Policy = (state: GameState) => GameState;
 
 function waterNeighbors(state: GameState, index: number): number {
-  return neighborsOf(index, 'moore').filter((n) => state.grid[n]!.element === 'water').length;
+  return neighborsOf(index).filter((n) => state.grid[n]!.element === 'water').length;
 }
 
 function sowWhileAffordable(
@@ -81,7 +81,7 @@ export const greedyPolicy: Policy = (prev) => {
     }
   }
   const sowScore = (s: GameState, i: number) => {
-    const veg = neighborsOf(i, 'moore').filter((n) => ['plant', 'forest'].includes(s.grid[n]!.element)).length;
+    const veg = neighborsOf(i).filter((n) => ['plant', 'forest'].includes(s.grid[n]!.element)).length;
     return waterNeighbors(s, i) * 3 + veg;
   };
   // A seed with no Water next to it can never germinate: only sow where it can.
@@ -90,7 +90,7 @@ export const greedyPolicy: Policy = (prev) => {
     state = sowWhileAffordable(state, sowScore, 3);
     const springs = miracleTargets(state, 'spring');
     if (springs.length === 0 || state.essence < MIRACLE_BY_ID['spring']!.cost + 3 * MIRACLE_BY_ID['sow']!.cost) break;
-    const open = (i: number) => neighborsOf(i, 'moore').filter((n) => state.grid[n]!.element === 'void').length;
+    const open = (i: number) => neighborsOf(i).filter((n) => state.grid[n]!.element === 'void').length;
     const best = springs.reduce((a, b) => (open(b) > open(a) ? b : a));
     state = castMiracle(state, 'spring', best);
   }
