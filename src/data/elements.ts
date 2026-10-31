@@ -14,7 +14,7 @@ export const ELEMENTS: Record<ElementId, ElementDef> = {
   plant: { id: 'plant', name: 'Plante', emoji: '🌿' },
   forest: { id: 'forest', name: 'Forêt', emoji: '🌲' },
   fire: { id: 'fire', name: 'Feu', emoji: '🔥' },
-  ash: { id: 'ash', name: 'Cendre', emoji: '🌫️' },
+  ash: { id: 'ash', name: 'Cendre', emoji: '' },
 };
 
 export const ELEMENT_IDS = Object.keys(ELEMENTS) as ElementId[];
