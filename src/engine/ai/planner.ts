@@ -25,6 +25,9 @@ export interface PlannerOptions {
 
 export const DEFAULT_PLANNER_CANDIDATES = 20;
 
+/** Heuristic score from which a seed counts as "next to Water" (see moves.ts). */
+const SOW_NEXT_TO_WATER = 3;
+
 /** Evaluate a state reached after the simulated season. */
 export function scoreState(state: GameState): number {
   if (state.phase === 'won') return 1e6;
@@ -75,13 +78,15 @@ function buildPlan(start: GameState, rng: Rng, k: number, maxCasts: number): Gam
   const allowed = new Set<string>(['sow']);
   let cap = 1;
   let temperature = 0; // 0 = always the best-scored move
-  if (k > 1) {
+  // k = 1: sow only. k = 2: sow first, a spring only once no seed can go next to Water.
+  const sowFirst = k === 2;
+  if (k > 2) {
     if (rng.next() < 0.6) allowed.add('spring');
     if (rng.next() < 0.3) allowed.add('raise');
     if (rng.next() < 0.3) allowed.add('ignite');
     cap = 0.3 + 0.7 * rng.next();
     temperature = 0.4 + 1.6 * rng.next();
-  } else {
+  } else if (k === 2) {
     allowed.add('spring');
   }
   const budget = Math.floor(start.essence * cap);
@@ -89,9 +94,12 @@ function buildPlan(start: GameState, rng: Rng, k: number, maxCasts: number): Gam
 
   let state = start;
   for (let n = 0; n < maxCasts; n++) {
-    const moves = candidateMoves(state, allowed).filter(
+    let moves = candidateMoves(state, allowed).filter(
       (m) => state.essence - MIRACLE_BY_ID[m.miracleId]!.cost >= floor,
     );
+    if (sowFirst && moves.some((m) => m.miracleId === 'sow' && m.score >= SOW_NEXT_TO_WATER)) {
+      moves = moves.filter((m) => m.miracleId === 'sow');
+    }
     if (moves.length === 0) break;
     let pick = moves[0]!;
     if (temperature === 0) {
@@ -117,7 +125,7 @@ function buildPlan(start: GameState, rng: Rng, k: number, maxCasts: number): Gam
 /** Create the planner policy. */
 export function createPlannerPolicy(options: PlannerOptions = {}): Policy {
   const K = options.candidates ?? DEFAULT_PLANNER_CANDIDATES;
-  const maxCasts = options.maxCasts ?? 10;
+  const maxCasts = options.maxCasts ?? 24;
   return (state) => {
     let best: GameState | null = null;
     let bestScore = -Infinity;
