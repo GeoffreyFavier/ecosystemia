@@ -21,6 +21,10 @@ export type Condition =
       relativeAltitude?: 'higher' | 'lower' | 'same';
     }
   | { type: 'direction'; dir: Dir; element: ElementSel }
+  /** Count cells (self excluded) within hex distance ≤ `distance`, not only direct neighbors. */
+  | { type: 'within'; element: ElementSel; distance: number; min?: number; max?: number }
+  /** OR of AND-lists: true if every condition of at least one option holds. */
+  | { type: 'anyOf'; options: Condition[][] }
   | { type: 'minAge'; value: number }
   | { type: 'altitude'; min?: Altitude; max?: Altitude }
   | { type: 'custom'; id: string };

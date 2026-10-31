@@ -218,6 +218,70 @@ describe('law thresholds (6 neighbors)', () => {
   });
 });
 
+describe('compound conditions', () => {
+  const C: [number, number] = [5, 4];
+  const R1 = [
+    {
+      type: 'anyOf' as const,
+      options: [
+        [{ type: 'neighbors' as const, element: 'vegetal' as const, min: 3 }],
+        [
+          { type: 'neighbors' as const, element: 'vegetal' as const, min: 2 },
+          { type: 'neighbors' as const, element: 'water' as const, min: 1 },
+        ],
+      ],
+    },
+  ];
+  const withRule = (conditions: unknown[]) => {
+    LAW_BY_ID['test-rule'] = {
+      id: 'test-rule', icon: '🧪', name: 'T', description: 't', kind: 'transform', rarity: 'common',
+      rule: { target: 'plant', conditions: conditions as never, result: 'forest' },
+    };
+    return makeState([], { grimoire: ['test-rule'] });
+  };
+  const run = (s: GameState) => {
+    const r = step(s);
+    delete LAW_BY_ID['test-rule'];
+    return el(r, ...C);
+  };
+
+  it('anyOf: first branch (3 vegetal)', () => {
+    const s = withRule(R1);
+    put(s, ...C, 'p');
+    for (const d of DIRS.slice(0, 3)) put(s, ...nb(...C, d), 'p');
+    expect(run(s)).toBe('forest');
+  });
+  it('anyOf: second branch (2 vegetal + water)', () => {
+    const s = withRule(R1);
+    put(s, ...C, 'p');
+    for (const d of DIRS.slice(0, 2)) put(s, ...nb(...C, d), 'p');
+    put(s, ...nb(...C, DIRS[2]!), 'W');
+    expect(run(s)).toBe('forest');
+  });
+  it('anyOf: neither branch (2 vegetal, no water)', () => {
+    const s = withRule(R1);
+    put(s, ...C, 'p');
+    for (const d of DIRS.slice(0, 2)) put(s, ...nb(...C, d), 'p');
+    expect(run(s)).toBe('plant');
+  });
+  it('within: water two steps away counts, three steps away does not', () => {
+    const rule = [
+      { type: 'neighbors', element: 'vegetal', min: 2 },
+      { type: 'within', element: 'water', distance: 2, min: 1 },
+    ];
+    const near = withRule(rule);
+    put(near, ...C, 'p');
+    for (const d of DIRS.slice(0, 2)) put(near, ...nb(...C, d), 'p');
+    put(near, ...nb(...nb(...C, 'SE'), 'SE'), 'W'); // distance 2
+    expect(run(near)).toBe('forest');
+    const far = withRule(rule);
+    put(far, ...C, 'p');
+    for (const d of DIRS.slice(0, 2)) put(far, ...nb(...C, d), 'p');
+    put(far, ...nb(...nb(...nb(...C, 'SE'), 'SE'), 'SE'), 'W'); // distance 3
+    expect(run(far)).toBe('plant');
+  });
+});
+
 describe('Foudre', () => {
   it('hits the highest forest', () => {
     const s = makeState(['F', '....F'], { grimoire: ['foudre'], cycle: 4, alts: ['1', '00002'] });

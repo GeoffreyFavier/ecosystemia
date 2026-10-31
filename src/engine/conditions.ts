@@ -1,7 +1,7 @@
 // Tiny interpreter for the data-driven law conditions.
 
 import { getCustomCondition } from './custom.ts';
-import { neighborInDir, neighborsOf } from './grid.ts';
+import { cellsWithin, neighborInDir, neighborsOf } from './grid.ts';
 import type { Cell, CellRule, Condition, ElementId, ElementSel } from './types.ts';
 
 export function matchesElement(element: ElementId, sel: ElementSel): boolean {
@@ -34,6 +34,13 @@ function evalCondition(grid: readonly Cell[], index: number, cond: Condition): b
       const n = neighborInDir(index, cond.dir);
       return n >= 0 && matchesElement(grid[n]!.element, cond.element);
     }
+    case 'within': {
+      let count = 0;
+      for (const n of cellsWithin(index, cond.distance)) if (matchesElement(grid[n]!.element, cond.element)) count++;
+      return count >= (cond.min ?? 1) && count <= (cond.max ?? Infinity);
+    }
+    case 'anyOf':
+      return cond.options.some((list) => list.every((c) => evalCondition(grid, index, c)));
     case 'minAge':
       return cell.age >= cond.value;
     case 'altitude':

@@ -3,6 +3,7 @@ import { GRID_COLS, GRID_ROWS } from '../src/data/constants.ts';
 import {
   axialToOffset,
   CELL_COUNT,
+  cellsWithin,
   DIRS,
   hexDistance,
   neighborInDir,
@@ -80,5 +81,16 @@ describe('hex grid (odd-r offset, axial maths)', () => {
       }
     }
     for (let i = 0; i < CELL_COUNT; i++) expect(hexDistance(start, i)).toBe(dist.get(i));
+  });
+});
+
+describe('cellsWithin', () => {
+  it('matches hexDistance and excludes the cell itself', () => {
+    const c = toIndex(5, 4);
+    const d2 = cellsWithin(c, 2);
+    expect(d2).toHaveLength(18); // 6 + 12 in an unclipped hex disc
+    expect(d2).not.toContain(c);
+    for (const i of d2) expect(hexDistance(c, i)).toBeLessThanOrEqual(2);
+    expect(new Set(cellsWithin(c, 1))).toEqual(new Set(neighborsOf(c)));
   });
 });

@@ -66,3 +66,16 @@ export function hexDistance(a: number, b: number): number {
   const dr = A.r - B.r;
   return (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2;
 }
+
+const WITHIN_CACHE = new Map<number, readonly number[]>();
+
+/** Cells at hex distance 1..distance from a cell (the cell itself excluded). */
+export function cellsWithin(index: number, distance: number): readonly number[] {
+  const key = index * 16 + distance;
+  let cells = WITHIN_CACHE.get(key);
+  if (!cells) {
+    cells = Array.from({ length: CELL_COUNT }, (_, i) => i).filter((i) => i !== index && hexDistance(index, i) <= distance);
+    WITHIN_CACHE.set(key, cells);
+  }
+  return cells;
+}

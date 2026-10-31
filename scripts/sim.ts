@@ -3,6 +3,8 @@
 //   npm run sim -- --runs 500 [--policy naive|greedy|planner] [--planner-k 20] [--seed 1] [--sweep [--variants A,B,C]]
 // --sweep compares the balance variants of src/data/variants.ts with both policies.
 
+import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
+import { cpus } from 'node:os';
 import { GOAL, START } from '../src/data/constants.ts';
 import { LAW_BY_ID } from '../src/data/laws.ts';
 import { MIRACLES } from '../src/data/miracles.ts';
@@ -84,7 +86,7 @@ function report(name: string, games: GameReport[]): void {
   }
 }
 
-if (!flag('sweep')) {
+if (isMainThread && !flag('sweep')) {
   const policyName = arg('policy', 'naive');
   const policy = policies[policyName];
   if (!policy) throw new Error(`Unknown policy "${policyName}" (naive | greedy | planner)`);
@@ -113,42 +115,134 @@ function withVariant<T>(v: BalanceVariant, fn: () => T): T {
   }
 }
 
-if (flag('sweep')) {
-  interface Cell {
-    win: number;
-    s3: number;
-    s4: number;
-    s5: number;
-    forests: number;
-    stagnant: number;
-  }
-  const summarize = (games: GameReport[]): Cell => {
-    const wins = games.filter((g) => g.won);
-    const share = (pred: (g: GameReport) => boolean) => (wins.length ? (100 * wins.filter(pred).length) / wins.length : 0);
-    return {
-      win: (100 * wins.length) / games.length,
-      s3: share((g) => g.endSeason <= 3),
-      s4: share((g) => g.endSeason === 4),
-      s5: share((g) => g.endSeason === 5),
-      forests: mean(games.map((g) => g.finalForests)),
-      stagnant: mean(games.map((g) => g.plantsNeverForest)),
-    };
+interface Job {
+  variantId: string;
+  policy: string;
+  runs: number;
+  firstSeed: number;
+  plannerK: number;
+}
+interface JobResult {
+  job: Job;
+  games: GameReport[];
+  msPerGame: number;
+}
+
+/** Worker side: play one (variant, policy) batch. */
+function runJob(job: Job): JobResult {
+  const variant = VARIANTS.find((v) => v.id === job.variantId)!;
+  const policy: Policy =
+    job.policy === 'planner' ? createPlannerPolicy({ candidates: job.plannerK }) : policies[job.policy]!;
+  return withVariant(variant, () => {
+    const t = performance.now();
+    const games = Array.from({ length: job.runs }, (_, i) => playGameDetailed(job.firstSeed + i, policy));
+    return { job, games, msPerGame: (performance.now() - t) / job.runs };
+  });
+}
+
+if (!isMainThread) {
+  parentPort!.postMessage(runJob(workerData as Job));
+}
+
+function runInWorker(job: Job): Promise<JobResult> {
+  return new Promise((resolve, reject) => {
+    const w = new Worker(new URL(import.meta.url), { workerData: job });
+    w.once('message', resolve);
+    w.once('error', reject);
+  });
+}
+
+/** Run jobs on a pool of workers (one per CPU core), longest jobs first. */
+async function runPool(jobs: Job[]): Promise<JobResult[]> {
+  const queue = [...jobs].sort((a, b) => Number(b.policy === 'planner') - Number(a.policy === 'planner'));
+  const results: JobResult[] = [];
+  const workers = Math.max(1, cpus().length);
+  await Promise.all(
+    Array.from({ length: workers }, async () => {
+      for (let job = queue.shift(); job; job = queue.shift()) {
+        results.push(await runInWorker(job));
+        process.stderr.write(`  done ${job.variantId} / ${job.policy}\n`);
+      }
+    }),
+  );
+  return results;
+}
+
+interface Summary {
+  win: number;
+  s3: number;
+  s4: number;
+  s5: number;
+  /** Share of wins obtained in season ≤ 4. */
+  upTo4: number;
+  burned: number;
+  forestsBurned: number;
+  finalForests: number;
+  neverForest: number;
+  casts: Record<string, number>;
+  ms: number;
+}
+
+function summarize(r: JobResult): Summary {
+  const games = r.games;
+  const wins = games.filter((g) => g.won);
+  const share = (pred: (g: GameReport) => boolean) => (wins.length ? (100 * wins.filter(pred).length) / wins.length : 0);
+  const casts: Record<string, number> = {};
+  for (const m of MIRACLES) casts[m.id] = mean(games.map((g) => g.miraclesCast[m.id] ?? 0));
+  return {
+    win: (100 * wins.length) / games.length,
+    s3: share((g) => g.endSeason <= 3),
+    s4: share((g) => g.endSeason === 4),
+    s5: share((g) => g.endSeason === 5),
+    upTo4: share((g) => g.endSeason <= 4),
+    burned: mean(games.map((g) => g.vegetalBurned)),
+    forestsBurned: mean(games.map((g) => g.forestsBurned)),
+    finalForests: mean(games.map((g) => g.finalForests)),
+    neverForest: mean(games.map((g) => g.plantsNeverForest)),
+    casts,
+    ms: r.msPerGame,
   };
-  console.log(`Sweep — ${runs} games per variant and policy (seeds ${firstSeed}…${firstSeed + runs - 1})`);
-  console.log('Target: naive ≈ 10 %, greedy ≈ 45 %, wins spread over seasons 3-5.\n');
+}
+
+async function sweep(): Promise<void> {
+  const plannerRuns = Number(arg('planner-runs', String(runs)));
   const wanted = arg('variants', '').split(',').filter(Boolean);
   const chosen = wanted.length ? VARIANTS.filter((v) => wanted.includes(v.id)) : VARIANTS;
-  const rows = chosen.map((v) => ({
-    v,
-    naive: summarize(withVariant(v, () => playAll(naivePolicy))),
-    greedy: summarize(withVariant(v, () => playAll(greedyPolicy))),
-  }));
-  const seasons = (c: Cell) => `${c.s3.toFixed(0)}/${c.s4.toFixed(0)}/${c.s5.toFixed(0)}`;
-  console.log('| Var | Description | naive win | naive S≤3/4/5 (% of wins) | greedy win | greedy S≤3/4/5 (% of wins) | greedy forests | greedy plants never Forest |');
-  console.log('|-----|-------------|-----------|----------------------------|------------|-----------------------------|----------------|----------------------------|');
-  for (const { v, naive, greedy } of rows) {
+  const plannerK = Number(arg('planner-k', '20'));
+  const jobs: Job[] = chosen.flatMap((v) =>
+    (['naive', 'greedy', 'planner'] as const).map((policy) => ({
+      variantId: v.id,
+      policy,
+      runs: policy === 'planner' ? plannerRuns : runs,
+      firstSeed,
+      plannerK,
+    })),
+  );
+  const t0 = performance.now();
+  const results = await runPool(jobs);
+  const get = (v: string, p: string) => summarize(results.find((r) => r.job.variantId === v && r.job.policy === p)!);
+
+  console.log(`Sweep — ${runs} games per variant (planner: ${plannerRuns}, K=${plannerK}), seeds ${firstSeed}…, ${((performance.now() - t0) / 1000).toFixed(0)} s on ${cpus().length} cores`);
+  console.log('Targets: greedy 35–50 %, planner 85–95 % with ≥ 30 % of its wins in season ≤ 4. naive is informative only.\n');
+  const seasons = (c: Summary) => `${c.s3.toFixed(0)}/${c.s4.toFixed(0)}/${c.s5.toFixed(0)}`;
+  console.log('| Var | Description | naive | greedy | greedy S≤3/4/5 | greedy burned | planner | planner S≤3/4/5 | planner wins ≤S4 | planner burned (forests) | planner ms/game |');
+  console.log('|-----|-------------|-------|--------|----------------|---------------|---------|-----------------|------------------|--------------------------|-----------------|');
+  for (const v of chosen) {
+    const n = get(v.id, 'naive');
+    const g = get(v.id, 'greedy');
+    const p = get(v.id, 'planner');
     console.log(
-      `| ${v.id} | ${v.label} | ${naive.win.toFixed(1)} % | ${seasons(naive)} | ${greedy.win.toFixed(1)} % | ${seasons(greedy)} | ${f1(greedy.forests)} | ${f1(greedy.stagnant)} |`,
+      `| ${v.id} | ${v.label} | ${n.win.toFixed(1)} % | ${g.win.toFixed(1)} % | ${seasons(g)} | ${f1(g.burned)} | ${p.win.toFixed(1)} % | ${seasons(p)} | ${p.upTo4.toFixed(0)} % | ${f1(p.burned)} (${f1(p.forestsBurned)}) | ${p.ms.toFixed(0)} |`,
     );
   }
+  console.log('\nMiracle usage (casts per game)');
+  console.log('| Var | greedy Semer | greedy Source | greedy Soulever | greedy Embraser | planner Semer | planner Source | planner Soulever | planner Embraser |');
+  console.log('|-----|-----|-----|-----|-----|-----|-----|-----|-----|');
+  for (const v of chosen) {
+    const g = get(v.id, 'greedy').casts;
+    const p = get(v.id, 'planner').casts;
+    console.log(`| ${v.id} | ${MIRACLES.map((m) => f1(g[m.id]!)).join(' | ')} | ${MIRACLES.map((m) => f1(p[m.id]!)).join(' | ')} |`);
+  }
 }
+
+if (isMainThread && flag('sweep')) await sweep();
