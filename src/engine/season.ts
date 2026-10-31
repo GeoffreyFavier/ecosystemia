@@ -122,7 +122,7 @@ export interface SeasonResult {
 /** Launch (if needed) and play the whole season. */
 export function runSeason(prev: GameState): SeasonResult {
   let state = prev.phase === 'running' ? prev : launchSeason(prev);
-  const startGrid = structuredClone(state.grid);
+  const startGrid = state.grid.map((c) => ({ ...c }));
   const cycles: CycleLog[] = [];
   while (state.cycleInSeason < CYCLES_PER_SEASON) {
     const r = stepCycle(state);

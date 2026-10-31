@@ -6,8 +6,21 @@ import type { Cell, ElementId, GameState, Law } from './types.ts';
 import { drawDraft } from './draft.ts';
 import { isVegetal } from './conditions.ts';
 
+/**
+ * Copy of a state that can be mutated safely. Hand-written (not structuredClone) because the AI
+ * planner clones states thousands of times. Season summaries in `history` are shared: they are
+ * never mutated after being pushed.
+ */
 export function cloneState(state: GameState): GameState {
-  return structuredClone(state);
+  return {
+    ...state,
+    grid: state.grid.map((c) => ({ ...c })),
+    grimoire: state.grimoire.slice(),
+    draft: state.draft ? state.draft.slice() : null,
+    miracles: state.miracles.map((m) => ({ ...m, before: { ...m.before } })),
+    history: state.history.slice(),
+    seasonChanges: { ...state.seasonChanges },
+  };
 }
 
 export function getLaw(id: string): Law {

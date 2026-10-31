@@ -1,6 +1,6 @@
 // Balance simulator: plays full games without UI.
 // Usage:
-//   npm run sim -- --runs 500 [--policy naive|greedy] [--seed 1] [--sweep [--variants A,B,C]]
+//   npm run sim -- --runs 500 [--policy naive|greedy|planner] [--planner-k 20] [--seed 1] [--sweep [--variants A,B,C]]
 // --sweep compares the balance variants of src/data/variants.ts with both policies.
 
 import { GOAL, START } from '../src/data/constants.ts';
@@ -9,6 +9,7 @@ import { MIRACLES } from '../src/data/miracles.ts';
 import { VARIANTS } from '../src/data/variants.ts';
 import type { BalanceVariant } from '../src/data/variants.ts';
 import type { Law } from '../src/engine/types.ts';
+import { createPlannerPolicy } from '../src/engine/ai/planner.ts';
 import { greedyPolicy, naivePolicy } from '../src/engine/policies.ts';
 import type { Policy } from '../src/engine/policies.ts';
 import { playGameDetailed } from '../src/engine/telemetry.ts';
@@ -20,12 +21,17 @@ function arg(name: string, fallback: string): string {
 }
 const flag = (name: string) => process.argv.includes(`--${name}`);
 
-const policies: Record<string, Policy> = { naive: naivePolicy, greedy: greedyPolicy };
+const plannerK = Number(arg('planner-k', '20'));
+const policies: Record<string, Policy> = { naive: naivePolicy, greedy: greedyPolicy, planner: createPlannerPolicy({ candidates: plannerK }) };
 const runs = Number(arg('runs', '500'));
 const firstSeed = Number(arg('seed', '1'));
 
-function playAll(policy: Policy): GameReport[] {
-  return Array.from({ length: runs }, (_, i) => playGameDetailed(firstSeed + i, policy));
+let lastMsPerGame = 0;
+function playAll(policy: Policy, n = runs): GameReport[] {
+  const t = performance.now();
+  const games = Array.from({ length: n }, (_, i) => playGameDetailed(firstSeed + i, policy));
+  lastMsPerGame = (performance.now() - t) / n;
+  return games;
 }
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -81,8 +87,10 @@ function report(name: string, games: GameReport[]): void {
 if (!flag('sweep')) {
   const policyName = arg('policy', 'naive');
   const policy = policies[policyName];
-  if (!policy) throw new Error(`Unknown policy "${policyName}" (naive | greedy)`);
-  report(policyName, playAll(policy));
+  if (!policy) throw new Error(`Unknown policy "${policyName}" (naive | greedy | planner)`);
+  const games = playAll(policy);
+  report(policyName, games);
+  console.log(`\nCompute time: ${lastMsPerGame.toFixed(1)} ms per game`);
 }
 
 // ---------------------------------------------------------------- sweep

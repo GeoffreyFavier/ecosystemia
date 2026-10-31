@@ -50,7 +50,8 @@ export function playGame(seed: number, policy: Policy): GameState {
   return state;
 }
 
-const GREEDY_LAW_ORDER = [
+/** Draft preference, best first (laws not listed are never replaced). */
+export const LAW_PRIORITY = [
   'dissemination',
   'vent-ouest',
   'pollen',
@@ -71,7 +72,7 @@ const GREEDY_LAW_ORDER = [
 export const greedyPolicy: Policy = (prev) => {
   let state = prev;
   if (state.draft) {
-    const rank = (id: string) => GREEDY_LAW_ORDER.indexOf(id);
+    const rank = (id: string) => LAW_PRIORITY.indexOf(id);
     const best = [...state.draft].sort((a, b) => rank(a) - rank(b))[0]!;
     if (state.grimoire.length < GRIMOIRE_SLOTS) state = takeDraftLaw(state, best);
     else {
