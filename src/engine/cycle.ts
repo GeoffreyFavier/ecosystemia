@@ -1,6 +1,6 @@
 // One simulation cycle: A) events, B) simultaneous cell rules, C) ages + journal.
 
-import { NATURAL_CATASTROPHES, NATURAL_WEAR } from '../data/naturalLaws.ts';
+import { activeNaturalEvents, NATURAL_CATASTROPHES, NATURAL_WEAR } from '../data/naturalLaws.ts';
 import { matchesElement, ruleApplies } from './conditions.ts';
 import { getCustomEvent } from './custom.ts';
 import { cloneState, getLaw } from './state.ts';
@@ -52,7 +52,7 @@ function splitGrimoire(ids: readonly string[]) {
 }
 
 /** Compute the cell changes of event laws, against the live grid. */
-function eventChanges(law: EventLaw, grid: readonly Cell[]): { index: number; to: ElementId }[] {
+function eventChanges(law: Pick<EventLaw, 'effect'>, grid: readonly Cell[]): { index: number; to: ElementId }[] {
   const eff = law.effect;
   if (eff.type === 'custom') return getCustomEvent(eff.id)(grid);
   const matches: number[] = [];
@@ -84,6 +84,14 @@ export function stepCycle(prev: GameState): CycleResult {
 
   // A. Events, in grimoire order, applied sequentially on the live grid.
   const eventTouched = new Set<number>();
+  // Natural events first (optional, e.g. Orage), then the grimoire's event laws.
+  for (const ev of activeNaturalEvents()) {
+    if (cycleNo % ev.period !== 0) continue;
+    for (const ch of eventChanges(ev, state.grid)) {
+      apply(ch.index, ch.to, ev.id);
+      eventTouched.add(ch.index);
+    }
+  }
   for (const law of eventLaws) {
     if (cycleNo % law.period !== 0) continue;
     for (const ch of eventChanges(law, state.grid)) {

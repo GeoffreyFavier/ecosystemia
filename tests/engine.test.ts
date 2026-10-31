@@ -6,6 +6,7 @@ import { naivePolicy, playGame } from '../src/engine/policies.ts';
 import { finishSeason, launchSeason, runSeason } from '../src/engine/season.ts';
 import { countElement, newGame } from '../src/engine/state.ts';
 import { DIRS, neighborsOf, toIndex } from '../src/engine/grid.ts';
+import { NATURAL_EVENTS } from '../src/data/naturalLaws.ts';
 import { GENERATION, GOAL, GRID_COLS, GRID_ROWS } from '../src/data/constants.ts';
 import { LAW_BY_ID, POOL_IDS } from '../src/data/laws.ts';
 import type { GameState } from '../src/engine/types.ts';
@@ -562,5 +563,60 @@ describe('world generation', () => {
       }
     }
     expect(high / total).toBeGreaterThan(0.7);
+  });
+});
+
+describe('Orage (optional natural event)', () => {
+  const orage = () => NATURAL_EVENTS.find((e) => e.id === 'orage')!;
+  const withOrage = <T>(fn: () => T): T => {
+    orage().enabled = true;
+    try {
+      return fn();
+    } finally {
+      orage().enabled = false;
+    }
+  };
+
+  it('is off by default: nothing happens on cycle 8', () => {
+    expect(orage().enabled).toBe(false);
+    const s = makeState(['', '...F'], { cycle: 7 });
+    expect(el(step(s), 3, 1)).toBe('forest');
+  });
+
+  it('every 8 cycles the highest Forest catches fire (and only then)', () => {
+    withOrage(() => {
+      const s = makeState(['F', '....F'], { cycle: 6, alts: ['1', '00002'] });
+      const c7 = step(s);
+      expect(el(c7, 4, 1)).toBe('forest'); // cycle 7: nothing
+      const c8 = step(c7);
+      expect(el(c8, 4, 1)).toBe('fire'); // cycle 8
+      expect(at(c8, 4, 1).lastLawId).toBe('orage');
+      expect(el(c8, 0, 0)).toBe('forest');
+    });
+  });
+
+  it('breaks ties like Foudre (row-major order)', () => {
+    withOrage(() => {
+      const s = makeState(['', '..F', '', '......F'], { cycle: 7, alts: ['', '112', '', '1111112'] });
+      const r = step(s);
+      expect(el(r, 2, 1)).toBe('fire');
+      expect(el(r, 6, 3)).toBe('forest');
+    });
+  });
+
+  it('does nothing without a Forest', () => {
+    withOrage(() => {
+      const { events } = stepCycle(makeState(['p'], { cycle: 7 }));
+      expect(events.filter((e) => e.lawId === 'orage')).toHaveLength(0);
+    });
+  });
+
+  it('stacks with Foudre on cycle 40: two different Forests burn', () => {
+    withOrage(() => {
+      const s = makeState(['', '..F', '', '......F'], { cycle: 39, grimoire: ['foudre'], alts: ['', '112', '', '1111112'] });
+      const r = step(s);
+      expect(el(r, 2, 1)).toBe('fire');
+      expect(el(r, 6, 3)).toBe('fire');
+    });
   });
 });

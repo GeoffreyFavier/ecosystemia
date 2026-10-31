@@ -7,6 +7,7 @@ import { isMainThread, parentPort, Worker, workerData } from 'node:worker_thread
 import { cpus } from 'node:os';
 import { GOAL, START } from '../src/data/constants.ts';
 import { LAW_BY_ID } from '../src/data/laws.ts';
+import { NATURAL_EVENTS } from '../src/data/naturalLaws.ts';
 import { MIRACLES } from '../src/data/miracles.ts';
 import { VARIANTS } from '../src/data/variants.ts';
 import type { BalanceVariant } from '../src/data/variants.ts';
@@ -100,18 +101,20 @@ if (isMainThread && !flag('sweep')) {
 /** Run `fn` with a variant's overrides applied to the (mutable) data, then restore the defaults. */
 function withVariant<T>(v: BalanceVariant, fn: () => T): T {
   const croissance = LAW_BY_ID['croissance'] as Extract<Law, { kind: 'transform' }>;
-  const saved = { vegetal: GOAL.vegetal, forests: GOAL.forests, essence: START.essence, conditions: croissance.rule.conditions };
+  const saved = { vegetal: GOAL.vegetal, forests: GOAL.forests, essence: START.essence, conditions: croissance.rule.conditions, orage: NATURAL_EVENTS.map((e) => e.enabled) };
   try {
     if (v.goalVegetal !== undefined) GOAL.vegetal = v.goalVegetal;
     if (v.goalForests !== undefined) GOAL.forests = v.goalForests;
     if (v.startEssence !== undefined) START.essence = v.startEssence;
     if (v.croissance) croissance.rule.conditions = v.croissance;
+    if (v.orage !== undefined) for (const e of NATURAL_EVENTS) if (e.id === 'orage') e.enabled = v.orage;
     return fn();
   } finally {
     GOAL.vegetal = saved.vegetal;
     GOAL.forests = saved.forests;
     START.essence = saved.essence;
     croissance.rule.conditions = saved.conditions;
+    NATURAL_EVENTS.forEach((e, i) => (e.enabled = saved.orage[i]!));
   }
 }
 

@@ -97,6 +97,16 @@ export interface NaturalLaw extends LawBase {
   rule: TransformRule;
 }
 
+/**
+ * Optional natural event: like an event law but not in the grimoire, applied only when `enabled`.
+ * Off by default (balance experiments flip it; it is not part of the shipped rules yet).
+ */
+export interface NaturalEvent extends LawBase {
+  period: number;
+  effect: EventEffect;
+  enabled: boolean;
+}
+
 // ---------- Miracles
 
 export type MiracleEffect =

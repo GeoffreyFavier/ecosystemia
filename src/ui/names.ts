@@ -1,7 +1,7 @@
 import { ELEMENTS } from '../data/elements.ts';
 import { LAW_BY_ID } from '../data/laws.ts';
 import { MIRACLE_BY_ID } from '../data/miracles.ts';
-import { NATURAL_LAWS } from '../data/naturalLaws.ts';
+import { NATURAL_EVENTS, NATURAL_LAWS } from '../data/naturalLaws.ts';
 import type { ElementId, Law } from '../engine/types.ts';
 
 /** Display name of any law id: grimoire law, natural law or miracle. */
@@ -10,6 +10,7 @@ export function lawName(id: string | null): string {
   if (LAW_BY_ID[id]) return LAW_BY_ID[id]!.name;
   const nat = NATURAL_LAWS.find((l) => l.id === id);
   if (nat) return `${nat.name} (naturelle)`;
+  if (NATURAL_EVENTS.some((e) => e.id === id)) return `${NATURAL_EVENTS.find((e) => e.id === id)!.name} (naturel)`;
   if (id.startsWith('miracle.')) return `Miracle : ${MIRACLE_BY_ID[id.slice(8)]?.name ?? id.slice(8)}`;
   return id;
 }
