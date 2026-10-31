@@ -666,6 +666,21 @@ code {
   border-radius: var(--radius);
   box-shadow: 0 10px 40px #000c;
 }
+.overlay-hide {
+  position: sticky;
+  top: 0;
+  float: right;
+  z-index: 1;
+  margin: 6px;
+}
+.overlay-restore {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  align-self: flex-start;
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .overlay-card > .panel {
   background: #1c1630;
 }

@@ -51,6 +51,8 @@ export function App() {
   const [bests, setBests] = useState(loadBest);
   const [win, setWin] = useState<{ stars: number; best: number; newBest: boolean } | null>(null);
   const recorded = useRef<string | null>(null);
+  /** Overlay temporarily hidden (to see the map and reach the debug history slider). */
+  const [overlayHidden, setOverlayHidden] = useState(false);
 
   useEffect(() => writeSave({ game, lastRun, pending, debug }), [game, lastRun, pending, debug]);
 
@@ -169,6 +171,9 @@ export function App() {
   const showHistorySlider = debug && lastRun !== null;
   const gameOver = game.phase === 'won' || game.phase === 'lost';
   const showEnd = !pending && !viewing && gameOver;
+  const overlayKind = canPickDraft ? 'revelation' : showEnd && !endDismissed ? 'end' : null;
+
+  useEffect(() => setOverlayHidden(false), [overlayKind]);
 
   return (
     <div class="layout">
@@ -190,6 +195,12 @@ export function App() {
       </div>
 
       <aside class="side">
+        {overlayKind && overlayHidden && (
+          <button class="btn small overlay-restore" onClick={() => setOverlayHidden(false)}>
+            👁 Afficher {overlayKind === 'revelation' ? 'la révélation' : 'le bilan'}
+          </button>
+        )}
+
         <Header
           season={shownSeason}
           essence={shownEssence}
@@ -333,8 +344,8 @@ export function App() {
         </footer>
       </aside>
 
-      {canPickDraft && (
-        <Overlay>
+      {canPickDraft && !overlayHidden && (
+        <Overlay onHide={() => setOverlayHidden(true)}>
           <DraftPanel
             offer={game.draft!}
             grimoire={game.grimoire}
@@ -344,8 +355,8 @@ export function App() {
         </Overlay>
       )}
 
-      {showEnd && !endDismissed && (
-        <Overlay>
+      {showEnd && !endDismissed && !overlayHidden && (
+        <Overlay onHide={() => setOverlayHidden(true)}>
           <EndScreen
             game={game}
             onNew={() => startNew(randomSeed())}
