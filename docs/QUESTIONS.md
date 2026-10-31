@@ -43,7 +43,7 @@ Chaque règle ambiguë a été tranchée au plus simple. À revalider après les
 
 ## Équilibrage (script `npm run sim`, 500 parties, graines 1–500)
 
-Carte hexagonale 12×9, objectif 40 végétaux dont 14 Forêts, 2 lacs, 10–14 Roches, 6 Graines.
+Carte hexagonale 12×9, objectif 40 végétaux dont 14 Forêts (devenu 12 Forêts, voir plus bas), 2 lacs, 10–14 Roches, 6 Graines.
 
 | Politique | Victoires | Saison moy. de victoire | Essence finale moy. | Végétaux finaux moy. (Forêts) |
 |-----------|-----------|-------------------------|---------------------|-------------------------------|
@@ -64,7 +64,7 @@ Carte hexagonale 12×9, objectif 40 végétaux dont 14 Forêts, 2 lacs, 10–14 
 - Les plantes n'apparaissent qu'au bord de l'eau (Germination), sauf via Cendre fertile et Lichen : l'expansion passe
   par la création d'eau (Source, Ruissellement, Pluie des cimes) ou par le feu.
 
-## Comparaison de variantes (`npm run sim -- --sweep`, 500 parties par variante et par politique, graines 1–500)
+## Historique : première comparaison de variantes (réglages de l'époque : Essence 10, 14 Forêts ; `npm run sim -- --sweep`, 500 parties par variante et par politique, graines 1–500)
 
 Cible indicative : naive ≈ 10 %, greedy ≈ 45 %, victoires réparties entre les saisons 3 et 5.
 **Aucune variante n'est appliquée** : les valeurs par défaut sont inchangées (`src/data/variants.ts` ne sert qu'au simulateur).
@@ -99,8 +99,8 @@ Cible indicative : naive ≈ 10 %, greedy ≈ 45 %, victoires réparties entre l
 - **Les victoires de greedy tombent à ~90 % en saison 5** pour toutes les variantes « Essence » : aucune ne répartit les
   victoires sur 3-5. Seule la famille D les déplace vers la saison 4 (41 %), au prix d'un jeu trop facile.
 
-### Recommandation (non appliquée)
-**G : GOAL.forests = 12 et Essence de départ = 12.** C'est la seule variante qui tombe sur la cible greedy (45,0 %), elle
+### Recommandation de l'époque
+**G (appliquée depuis, voir « Itération 2 ») : GOAL.forests = 12 et Essence de départ = 12.** C'est la seule variante qui tombe sur la cible greedy (45,0 %), elle
 garde la structure actuelle du jeu et ne touche que deux chiffres de `src/data/constants.ts`. Limites connues : naive
 reste à ~6 % et 92 % des victoires de greedy arrivent en saison 5. Si l'on veut des victoires plus précoces, la piste à
 tester ensuite est une Croissance **intermédiaire** entre ≥ 3 et ≥ 2 voisins (par exemple ≥ 2 voisins seulement si la

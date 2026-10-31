@@ -40,12 +40,12 @@ Le moteur est donc pur, déterministe et jouable par un programme.
 ## 3. Structure d'une partie
 
 - **5 saisons maximum**, **8 cycles par saison**.
-- **Objectif** vérifié à la fin de chaque saison : au moins **40 végétaux** dont au moins **14 Forêts**.
+- **Objectif** vérifié à la fin de chaque saison : au moins **40 végétaux** dont au moins **12 Forêts**.
   Atteint → **victoire immédiate**.
 - **Défaite** :
   - objectif non atteint à la fin de la saison 5 ;
   - ou **monde mort** : 0 végétal, 0 Graine, et Essence inférieure au coût du miracle de vie le moins cher (Semer).
-- **Essence** de départ : 10. En fin de saison : +1 par Plante, +2 par Forêt, plus les bonus des lois d'Essence.
+- **Essence** de départ : 12. En fin de saison : +1 par Plante, +2 par Forêt, plus les bonus des lois d'Essence.
 - Ordre de fin de saison : Essence → victoire ? → défaite ? → saison suivante.
 
 ## 4. Phase d'intervention
@@ -135,7 +135,7 @@ Le jeu ne parle pas de « cartes » : les lois sont une liste sobre (icône, nom
 
 ### Éléments
 
-- En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/40, forêts b/14) avec barres.
+- En-tête : « Âge I — Saison x/5 », Essence, objectif (végétaux a/40, forêts b/12) avec barres.
 - Carte hexagonale rendue en **SVG** (un polygone par case, emoji en `<text>`, tap sur le polygone) : fond = altitude
   (3 teintes de terre), emoji d'élément avec fond coloré léger.
 - Miracle : taper le miracle puis la case (cases valides surlignées). Taper une case sans miracle ouvre l'inspecteur.

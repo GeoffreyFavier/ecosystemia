@@ -95,12 +95,7 @@ function withVariant<T>(v: BalanceVariant, fn: () => T): T {
     if (v.goalVegetal !== undefined) GOAL.vegetal = v.goalVegetal;
     if (v.goalForests !== undefined) GOAL.forests = v.goalForests;
     if (v.startEssence !== undefined) START.essence = v.startEssence;
-    if (v.croissance) {
-      croissance.rule.conditions = [
-        { type: 'neighbors', element: 'vegetal', min: v.croissance.minNeighbors },
-        { type: 'minAge', value: v.croissance.minAge },
-      ];
-    }
+    if (v.croissance) croissance.rule.conditions = v.croissance;
     return fn();
   } finally {
     GOAL.vegetal = saved.vegetal;
