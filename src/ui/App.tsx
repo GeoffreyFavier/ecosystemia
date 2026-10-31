@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CYCLES_PER_SEASON } from '../data/constants.ts';
 import {
   castMiracle,
@@ -10,6 +10,7 @@ import {
   previewCycle,
   removeLaw,
   runSeason,
+  starsFor,
   skipDraft,
   takeDraftLaw,
   undoAllMiracles,
@@ -27,6 +28,7 @@ import { VIEW_H, VIEW_W } from './hex.ts';
 import { MiracleBar } from './MiracleBar.tsx';
 import { NaturalLaws } from './NaturalLaws.tsx';
 import { SeasonSummary } from './SeasonSummary.tsx';
+import { loadBest, mergeBest, saveBest, starString } from './best.ts';
 import { buildFrames } from './replay.ts';
 import { loadSave, writeSave } from './save.ts';
 
@@ -46,8 +48,26 @@ export function App() {
   const [previewOn, setPreviewOn] = useState(false);
   const [inspected, setInspected] = useState<number | null>(null);
   const [endDismissed, setEndDismissed] = useState(false);
+  const [bests, setBests] = useState(loadBest);
+  const [win, setWin] = useState<{ stars: number; best: number; newBest: boolean } | null>(null);
+  const recorded = useRef<string | null>(null);
 
   useEffect(() => writeSave({ game, lastRun, pending, debug }), [game, lastRun, pending, debug]);
+
+  // Record the stars of a victory (once per game) once its season summary has been acknowledged.
+  useEffect(() => {
+    if (game.phase !== 'won' || pending) return;
+    const key = `${game.seed}:${game.cycle}`;
+    if (recorded.current === key) return;
+    recorded.current = key;
+    const stars = starsFor(game);
+    const m = mergeBest(bests, game.seed, stars);
+    if (m.isNew) {
+      setBests(m.best);
+      saveBest(m.best);
+    }
+    setWin({ stars, best: Math.max(stars, m.previous), newBest: m.isNew });
+  }, [game, pending, bests]);
 
   const frames = useMemo(() => (lastRun ? buildFrames(lastRun.startGrid, lastRun.cycles) : []), [lastRun]);
 
@@ -298,6 +318,7 @@ export function App() {
         <footer class="footer">
           <span>
             Graine <code>{game.seed}</code>
+            {bests[String(game.seed)] ? <> · {starString(bests[String(game.seed)]!)}</> : null}
           </span>
           <label class="switch">
             <input type="checkbox" checked={debug} onChange={(e) => setDebug((e.currentTarget as HTMLInputElement).checked)} />
@@ -330,6 +351,9 @@ export function App() {
             onNew={() => startNew(randomSeed())}
             onReplay={() => startNew(game.seed)}
             onClose={() => setEndDismissed(true)}
+            stars={win?.stars ?? starsFor(game)}
+            best={win?.best ?? 0}
+            newBest={win?.newBest ?? false}
           />
         </Overlay>
       )}

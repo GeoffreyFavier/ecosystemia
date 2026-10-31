@@ -16,6 +16,13 @@ export const RARITY_WEIGHTS = { common: 60, uncommon: 30, rare: 10 } as const;
 
 export const GOAL: { vegetal: number; forests: number } = { vegetal: 40, forests: 14 };
 
+/** Victory rating: win in season ≤ maxSeason → stars (checked in order). */
+export const STAR_THRESHOLDS: readonly { maxSeason: number; stars: number }[] = [
+  { maxSeason: 3, stars: 3 },
+  { maxSeason: 4, stars: 2 },
+  { maxSeason: 5, stars: 1 },
+];
+
 export const ESSENCE_PER_PLANT = 1;
 export const ESSENCE_PER_FOREST = 2;
 

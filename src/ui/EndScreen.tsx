@@ -1,5 +1,6 @@
 import { GOAL } from '../data/constants.ts';
 import type { GameState } from '../engine/index.ts';
+import { starString } from './best.ts';
 import { lawName } from './names.ts';
 
 interface Props {
@@ -8,9 +9,14 @@ interface Props {
   onReplay: () => void;
   /** Dismiss the overlay to look at the final world. */
   onClose: () => void;
+  /** Stars of this victory (0 when lost). */
+  stars: number;
+  /** Best stars ever for this seed (including this game). */
+  best: number;
+  newBest: boolean;
 }
 
-export function EndScreen({ game, onNew, onReplay, onClose }: Props) {
+export function EndScreen({ game, onNew, onReplay, onClose, stars, best, newBest }: Props) {
   const won = game.phase === 'won';
   const last = game.history[game.history.length - 1];
   const totals: Record<string, number> = {};
@@ -27,6 +33,14 @@ export function EndScreen({ game, onNew, onReplay, onClose }: Props) {
             ? 'Plus aucune vie, plus assez d’Essence pour la ranimer.'
             : `Les cinq saisons sont écoulées sans que l’objectif (${GOAL.vegetal} végétaux dont ${GOAL.forests} Forêts) soit atteint.`}
       </p>
+      {won && (
+        <p class="stars" aria-label={`${stars} étoile${stars > 1 ? 's' : ''} sur 3`}>
+          <span class="star-row">{starString(stars)}</span>
+          <small>
+            {newBest ? 'Nouveau record pour cette graine !' : `Meilleur pour cette graine : ${starString(best)}`}
+          </small>
+        </p>
+      )}
       <ul class="plain stats">
         <li>Saisons jouées : <strong>{game.history.length}</strong></li>
         <li>Végétaux finaux : <strong>{last?.vegetal ?? 0}</strong> (Forêts : <strong>{last?.forests ?? 0}</strong>)</li>

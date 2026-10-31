@@ -6,6 +6,7 @@ import {
   ESSENCE_PER_PLANT,
   GOAL,
   MAX_SEASONS,
+  STAR_THRESHOLDS,
 } from '../data/constants.ts';
 import { MIRACLES } from '../data/miracles.ts';
 import { ruleApplies } from './conditions.ts';
@@ -34,6 +35,16 @@ export function goalReached(grid: readonly Cell[]): boolean {
 /** Cheapest miracle able to bring life back (used by the dead-world rule). */
 export function cheapestLifeCost(): number {
   return Math.min(...MIRACLES.filter((m) => m.createsLife).map((m) => m.cost));
+}
+
+/** Stars earned by winning in a given season (0 if it is beyond every threshold). */
+export function starsForSeason(season: number): number {
+  return STAR_THRESHOLDS.find((t) => season <= t.maxSeason)?.stars ?? 0;
+}
+
+/** Stars of a finished game: 0 unless it was won. */
+export function starsFor(state: GameState): number {
+  return state.phase === 'won' ? starsForSeason(state.season) : 0;
 }
 
 export function isDeadWorld(state: GameState): boolean {

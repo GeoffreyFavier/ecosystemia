@@ -550,6 +550,17 @@ details.panel summary {
 .end p {
   margin: 0;
 }
+.stars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.star-row {
+  font-size: 34px;
+  letter-spacing: 6px;
+  color: var(--accent);
+}
 .stats {
   font-size: 14px;
 }
